@@ -23,8 +23,7 @@ npm run build   # production build
 | Photos, video, PDF menu | `public/` |
 
 ## Handoff notes
-- **Not tested since the last edit.** A successful `next build` and a browser check (desktop + mobile, client-side navigation, search) passed *before* one final change. That change is in `MenuBrowser.tsx`: after a search or filter while the toolbar is pinned, the page jumps so the results start under the toolbar. Run `npm run build` and test it once.
-- **Leftover files:** `index.html`, `menu.html` and `assets/` in this folder are from the old static version. They are listed in `.vercelignore` so they don't deploy, but they can be deleted.
+- **Menu toolbar:** after a search or filter while the toolbar is pinned, the page jumps so the results start just under the toolbar (and under the nav when it's showing). Verified at 1440×900 and 390×844.
 - **Opening hours:** unknown, so the site doesn't show any.
 - **Menu questions still waiting on the owner** (the items are left as printed until answered):
   - "Continuos" noodles. Is it "Continental"?

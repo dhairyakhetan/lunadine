@@ -25,6 +25,7 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
 
     /* in-page #anchors → smooth scroll */
     const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented) return; // already handled by a component (e.g. menu chips)
       const a = (e.target as Element).closest?.('a[href^="#"]') as HTMLAnchorElement | null;
       if (!a) return;
       const id = a.getAttribute("href")!;

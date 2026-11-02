@@ -62,5 +62,4 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 - Signature-dish descriptions on the home page were written for the site. The owner may revise them.
 
 ## Housekeeping
-- `index.html`, `menu.html`, `assets/` at the repo root are leftovers from the earlier static version. They're excluded via `.vercelignore` and safe to delete.
 - Don't commit `node_modules`, `.next`, or `.vercel` (already in `.gitignore`).

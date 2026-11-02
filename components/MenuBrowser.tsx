@@ -42,13 +42,27 @@ export default function MenuBrowser() {
   const filtering = !!q || mode !== "all";
 
   const toolH = () => tools.current?.getBoundingClientRect().height ?? 140;
+  const navH = () => document.querySelector(".nav")?.getBoundingClientRect().height ?? 64;
+  /** Page Y where the toolbar starts sticking. Measured from .mbody, because the toolbar's own
+   *  rect includes its `.stuck` translateY (it slides under the nav), which would read as "not pinned". */
+  const pinY = () => (body.current?.parentElement?.getBoundingClientRect().top ?? 0) + scrollY - toolH();
+  const isPinned = () => pinY() - scrollY <= 0.5;
+  /** Scroll target that puts page-Y `docY` just under the pinned toolbar, allowing for the nav,
+   *  which hides when scrolling down past 90vh and comes back when scrolling up (see Nav). */
+  const underBar = (docY: number, gap = 16) => {
+    const th = toolH(), nh = navH();
+    const navHidden = docY - th - gap;
+    if (navHidden > scrollY && navHidden > innerHeight * 0.9) return navHidden;
+    const y = docY - th - nh - gap, pin = pinY();
+    return y >= pin ? y : Math.max(0, pin - nh); // not pinned there: rest the toolbar just under the nav
+  };
   const scrollToY = (y: number, dur = 1.3) => {
     const lenis = window.LD?.lenis;
     lenis ? lenis.scrollTo(y, { duration: dur }) : window.scrollTo({ top: y, behavior: "smooth" });
   };
   const goTo = (id: string) => {
     const el = document.getElementById(id);
-    if (el) scrollToY(el.getBoundingClientRect().top + scrollY - toolH() - 16);
+    if (el) scrollToY(underBar(el.getBoundingClientRect().top + scrollY));
   };
 
   /* veg / non-veg pill */
@@ -81,14 +95,15 @@ export default function MenuBrowser() {
       ticking = false;
       const t = tools.current, b = body.current;
       if (!t || !b) return;
-      const line = toolH() + 40;
+      const line = t.getBoundingClientRect().bottom + 40; // visual bottom: includes the slide under the nav
       let id = "";
       b.querySelectorAll<HTMLElement>(".msec:not([hidden])").forEach(s => { if (s.getBoundingClientRect().top - line <= 0) id = s.id; });
       if (!id) id = b.querySelector<HTMLElement>(".msec:not([hidden])")?.id ?? "";
       setActive(id);
       const r = b.getBoundingClientRect();
-      t.style.setProperty("--mp", Math.min(1, Math.max(0, (line - r.top) / (r.height - innerHeight + line))).toFixed(4));
-      setStuck(t.getBoundingClientRect().top <= 0.5);
+      const pl = toolH() + 40;
+      t.style.setProperty("--mp", Math.min(1, Math.max(0, (pl - r.top) / (r.height - innerHeight + pl))).toFixed(4));
+      setStuck(isPinned());
     };
     const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
     addEventListener("scroll", req, { passive: true });
@@ -115,9 +130,9 @@ export default function MenuBrowser() {
     const lenis = window.LD?.lenis;
     lenis?.resize();
     // If the toolbar is pinned, jump so the (now shorter) results start right under it.
-    const t = tools.current, b = body.current;
-    if (t && b && t.getBoundingClientRect().top <= 0.5) {
-      const y = b.getBoundingClientRect().top + scrollY - toolH() + 8;
+    const b = body.current;
+    if (b && isPinned()) {
+      const y = underBar(b.getBoundingClientRect().top + scrollY);
       lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : window.scrollTo(0, y);
     }
     dispatchEvent(new Event("scroll"));
