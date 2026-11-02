@@ -27,9 +27,11 @@ export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: 
     const update = () => {
       const y = window.scrollY;
       nav.classList.toggle("is-scrolled", y > 40);
-      const hide = y > lastY && y > innerHeight * 0.9 && !root.classList.contains("menu-open");
-      nav.classList.toggle("is-hidden", hide);
-      root.classList.toggle("nav-gone", hide);
+      if (y !== lastY) { // a scroll event without movement (e.g. dispatched after a layout change) keeps the current state
+        const hide = y > lastY && y > innerHeight * 0.9 && !root.classList.contains("menu-open");
+        nav.classList.toggle("is-hidden", hide);
+        root.classList.toggle("nav-gone", hide);
+      }
       root.style.setProperty("--navh", nav.getBoundingClientRect().height + "px");
       lastY = y; ticking = false;
     };

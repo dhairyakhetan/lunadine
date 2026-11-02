@@ -24,6 +24,7 @@ npm run build   # production build
 
 ## Handoff notes
 - **Menu toolbar:** after a search or filter while the toolbar is pinned, the page jumps so the results start just under the toolbar (and under the nav when it's showing). Verified at 1440×900 and 390×844.
+- **Menu issues / review mode:** open `/menu?review` (or any preview deploy) to see the **Menu issues** button and the flagged dishes. The list lives in `lib/menu-issues.ts`.
 - **Opening hours:** unknown, so the site doesn't show any.
 - **Menu questions still waiting on the owner** (the items are left as printed until answered):
   - "Continuos" noodles. Is it "Continental"?

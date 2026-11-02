@@ -5,14 +5,14 @@ import PageFX from "@/components/PageFX";
 import MenuBrowser from "@/components/MenuBrowser";
 import { Footer, Dock } from "@/components/Chrome";
 import { Ornament } from "@/components/Brand";
-import { IUp } from "@/components/Icons";
+import { IUp, ISeal, ILeaf } from "@/components/Icons";
 import { TOTAL_DISHES } from "@/lib/menu";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Menu — Chinese, Tandoor, Bengali, Thai & Korean in Salkia, Howrah",
   description:
-    "The full Luna Dine menu — soups, Chinese starters, noodles, fried rice, momos, tandoor, biryani, Indian & Bengali curries, breads, mocktails, shakes and desserts, with prices.",
+    "The full Luna Dine menu — soups, Chinese starters, noodles, fried rice, momos, tandoor, biryani, Indian & Bengali curries, breads, mocktails, shakes and desserts, with prices. No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for vegetarian dishes.",
   alternates: { canonical: "/menu" },
   openGraph: { title: "Luna Dine — The Menu", images: ["/img/og.jpg"] },
 };
@@ -40,8 +40,17 @@ export default function MenuPage() {
               </span>
             </h1>
             <p className="lead reveal-in" style={d(".3s")}>
-              {TOTAL_DISHES} dishes across Chinese, Thai, Korean, tandoor, Indian and Bengali kitchens. Search anything, or filter by veg / non-veg.
+              {TOTAL_DISHES} dishes across Chinese, Thai, Korean, tandoor, Indian and Bengali kitchens. Search anything, or filter by veg&nbsp;/&nbsp;non&#8209;veg.
             </p>
+            <div className="promise reveal-in" style={d(".35s")}>
+              <span className="promise__title">Our kitchen promise</span>
+              <ul>
+                <li><ISeal />No Ajinomoto</li>
+                <li><ISeal />No trans fat</li>
+                <li><ISeal />No food colour</li>
+                <li className="promise__veg"><ILeaf />Separate chef &amp; utensils for our vegetarian menu</li>
+              </ul>
+            </div>
             <div className="ornament flip reveal-in" style={d(".4s")}><Ornament /></div>
           </div>
         </section>

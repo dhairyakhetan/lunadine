@@ -40,12 +40,20 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 5. **"The Room" pinning (desktop >860px only):** PageFX sets the section height to `100vh + trackOverflow` and translates the track on scroll. A ResizeObserver recalculates this. Below 860px it's a native horizontal swipe with scroll-snap.
 6. **Respect `prefers-reduced-motion`** everywhere. There's already a global CSS override, and JS effects check `matchMedia`.
 7. **Breakpoint** is 860px (nav → burger, hero video becomes full-bleed, dock appears).
+8. **`backdrop-filter`: write `-webkit-backdrop-filter` first, then `backdrop-filter`.** The build's CSS minifier keeps only the last of the pair. With the standard one first, Chrome, Edge and Android got no blur at all.
+9. **Menu toolbar position:** the pinned toolbar slides down under the nav (`.mtools.stuck` translateY) when the nav is showing. "Is it pinned?" is measured from `.mbody`, not the toolbar's own rect, and scroll targets go through `underBar()` in `MenuBrowser`, which allows for the nav. The nav only changes state when the scroll position actually changes.
 
 ## Design system
 - **Colours:** night `#080d1b`, navy `#1b2540` (brand), cream `#f4ecda`, paper `#efe5cd` (+ `/img/paper.webp` multiplied), gold `#f3c37c` (from the illuminated signage), ember `#d4694e`. Veg/non-veg marks use the Indian standard green dot / red triangle (`.vg`, `.vg.n`).
 - **Motifs:** arches (`border-radius:999px 999px …`, echoing the restaurant's lit Pichwai arches), the moon, stars, and the deer emblem. Dark night sections alternate with cream "menu card" paper sections.
 - **Motion:** easing `cubic-bezier(.22,1,.36,1)`, ~1.1 s reveals, nothing bouncy.
 - **Logo:** `components/Brand.tsx` holds paths vector-traced from the printed menu. They use `currentColor`. Don't redraw or restyle the mark.
+
+## Review mode (menu issues)
+`lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a **Menu issues** button in the toolbar opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host in `SITE.url` (so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
+
+## Kitchen promise
+Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for the vegetarian menu. Don't extend or reword them as stronger claims without the owner.
 
 ## Content rules
 - **Don't invent facts.** Opening hours are unknown, so they're intentionally absent. Don't add hours, ratings, reviews, awards, chef names, or "since" claims unless the owner provides them.

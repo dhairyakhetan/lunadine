@@ -1,13 +1,26 @@
 "use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MENU, type Diet } from "@/lib/menu";
+import { MENU_ISSUES } from "@/lib/menu-issues";
+import { SITE } from "@/lib/site";
 import { Corner, Ornament } from "./Brand";
-import { ISearch, IDownload } from "./Icons";
+import { ISearch, IDownload, IAlert, IClose } from "./Icons";
 
 type Mode = "all" | "v" | "n";
 
 const Veg = ({ t }: { t: Diet }) => (t === "v" ? <i className="vg" title="Veg" /> : t === "n" ? <i className="vg n" title="Non-veg" /> : null);
 const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
+
+/* Review mode: the "Menu issues" button and inline flags. Off on the production domain unless the
+   URL has ?review, so customers never see it; on localhost and preview deploys it's always on. */
+const isReview = () => {
+  try {
+    return new URLSearchParams(location.search).has("review") || location.hostname !== new URL(SITE.url).hostname;
+  } catch { return false; }
+};
+const FLAGS = new Map<string, number[]>();
+MENU_ISSUES.forEach((iss, i) => iss.items?.forEach(n => FLAGS.set(n, [...(FLAGS.get(n) ?? []), i])));
+const SECTION_FLAGS = new Map(MENU_ISSUES.flatMap((iss, i) => (iss.section ? [[iss.section, i] as const] : [])));
 
 function Hi({ text, q }: { text: string; q: string }) {
   if (!q) return <>{text}</>;
@@ -22,6 +35,8 @@ export default function MenuBrowser() {
   const [active, setActive] = useState(MENU[0].id);
   const [stuck, setStuck] = useState(false);
   const [seen, setSeen] = useState<Set<string>>(() => new Set());
+  const [review, setReview] = useState(false);
+  const [issuesOpen, setIssuesOpen] = useState(false);
   const q = raw.trim().toLowerCase();
 
   const tools = useRef<HTMLDivElement>(null);
@@ -30,6 +45,17 @@ export default function MenuBrowser() {
   const input = useRef<HTMLInputElement>(null);
   const pill = useRef<HTMLSpanElement>(null);
   const segBtns = useRef<Record<Mode, HTMLButtonElement | null>>({ all: null, v: null, n: null });
+  const issuesBox = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setReview(isReview()); }, []);
+  useEffect(() => {
+    if (!issuesOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIssuesOpen(false); };
+    const onDown = (e: PointerEvent) => { if (!issuesBox.current?.contains(e.target as Node)) setIssuesOpen(false); };
+    addEventListener("keydown", onKey);
+    addEventListener("pointerdown", onDown);
+    return () => { removeEventListener("keydown", onKey); removeEventListener("pointerdown", onDown); };
+  }, [issuesOpen]);
 
   const filtered = useMemo(() => MENU.map(sec => {
     const groups = sec.groups
@@ -61,8 +87,12 @@ export default function MenuBrowser() {
     lenis ? lenis.scrollTo(y, { duration: dur }) : window.scrollTo({ top: y, behavior: "smooth" });
   };
   const goTo = (id: string) => {
+    // Layout position, not getBoundingClientRect: unrevealed sections are still translated 40px down.
     const el = document.getElementById(id);
-    if (el) scrollToY(underBar(el.getBoundingClientRect().top + scrollY));
+    let y = 0;
+    if (!el) return;
+    for (let e: HTMLElement | null = el; e; e = e.offsetParent as HTMLElement | null) y += e.offsetTop;
+    scrollToY(underBar(y));
   };
 
   /* veg / non-veg pill */
@@ -138,6 +168,13 @@ export default function MenuBrowser() {
     dispatchEvent(new Event("scroll"));
   }, [q, mode]);
 
+  const showIssue = (i: number) => {
+    const iss = MENU_ISSUES[i];
+    setIssuesOpen(false);
+    if (iss.q) { setMode("all"); setRaw(iss.q); }
+    else if (iss.section) { setMode("all"); setRaw(""); requestAnimationFrame(() => requestAnimationFrame(() => goTo(iss.section!))); }
+  };
+
   const onFocus = () => {
     const top = tools.current?.getBoundingClientRect().top ?? 0;
     if (top > 2) scrollToY(scrollY + top, 0.8);
@@ -153,7 +190,7 @@ export default function MenuBrowser() {
               <ISearch />
               <input
                 ref={input} id="q" type="search" value={raw} autoComplete="off" enterKeyHint="search"
-                placeholder="Search — try “biryani”, “paneer”, “mojito”"
+                placeholder="Search dishes — try “biryani”"
                 onChange={e => setRaw(e.target.value)} onFocus={onFocus}
                 onKeyDown={e => { if (e.key === "Escape") { setRaw(""); input.current?.blur(); } }}
               />
@@ -167,6 +204,36 @@ export default function MenuBrowser() {
                 </button>
               ))}
             </div>
+            {review && (
+              <div className="issues" ref={issuesBox}>
+                <button type="button" className="issues__btn" aria-expanded={issuesOpen} aria-controls="menu-issues" onClick={() => setIssuesOpen(o => !o)}>
+                  <IAlert /><span className="issues__lbl">Menu issues</span><b>{MENU_ISSUES.length}</b>
+                </button>
+                {issuesOpen && (
+                  <div className="issues__panel" id="menu-issues" role="dialog" aria-label="Menu issues" data-lenis-prevent>
+                    <div className="issues__head">
+                      <div>
+                        <b>{MENU_ISSUES.length} things to confirm with the owner</b>
+                        <span>Review mode only, hidden from customers. Flagged dishes are marked <i className="flag__q">?</i> on the menu.</span>
+                      </div>
+                      <button type="button" aria-label="Close" onClick={() => setIssuesOpen(false)}><IClose /></button>
+                    </div>
+                    <ol>
+                      {MENU_ISSUES.map((iss, i) => (
+                        <li key={iss.title}>
+                          <div>
+                            <b>{iss.title}</b>
+                            <p>{iss.detail}</p>
+                            <small>{iss.source === "card" ? "From the printed card" : "Spotted while reviewing the site"}</small>
+                          </div>
+                          <button type="button" onClick={() => showIssue(i)}>Show</button>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            )}
             <a className="mtools__pdf" href="/luna-dine-menu.pdf" download><IDownload /><span>PDF menu</span></a>
           </div>
         </div>
@@ -192,20 +259,27 @@ export default function MenuBrowser() {
                 <small>{sec.kicker}</small>
                 <h2>{sec.title}</h2>
                 <div className="ornament"><Ornament /></div>
+                {review && SECTION_FLAGS.has(sec.id) && (
+                  <p className="msec__flag"><i className="flag__q">?</i>{MENU_ISSUES[SECTION_FLAGS.get(sec.id)!].detail}</p>
+                )}
               </header>
               {sec.groups.map(g => (
                 <div className="mgrp" key={g.label}>
                   <h3><Veg t={g.t} />{g.label}<span className="ct">{g.items.length}</span></h3>
                   <ul className="items">
-                    {g.items.map(([n, p, note]) => (
-                      <li key={n}>
+                    {g.items.map(([n, p, note]) => {
+                      const flags = review ? FLAGS.get(n) : undefined;
+                      const why = flags?.map(i => MENU_ISSUES[i].detail).join(" ");
+                      return (
+                      <li key={n} className={flags ? "flag" : undefined} title={why}>
                         <Veg t={g.t} />
-                        <span className="nm"><Hi text={n} q={q} /></span>
+                        <span className="nm"><Hi text={n} q={q} />{flags && <i className="flag__q" aria-label={`Needs confirming: ${why}`}>?</i>}</span>
                         {note && <span className="nt">{note}</span>}
                         <span className="dt" />
                         <span className="pr">{price(p)}</span>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
