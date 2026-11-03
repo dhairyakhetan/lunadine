@@ -32,6 +32,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 | `components/PageFX.tsx` | Page-level scroll effects (reveals, count-up, story/moon, pinned horizontal room, lazy map, video play-on-screen, dock/to-top, in-page `#anchor` smooth scroll). Runs on whatever markup the page has and cleans up on unmount. |
 | `components/SmoothScroll.tsx` | Lenis instance on `window.LD.lenis`. Handles scroll-to-top / `#hash` on client-side navigation. |
 | `components/Nav.tsx`, `Sky.tsx`, `Chrome.tsx` (Footer, Dock), `Brand.tsx` (logo SVG paths), `Icons.tsx` | Shared UI |
+| `public/img/og-home.jpg`, `og-menu.jpg` | Social share images (1200×630) for `/` and `/menu`, rendered by `scripts/og-images.js` (needs Playwright, which isn't a project dependency). The menu one shows five real dishes and prices. If those change, update the script and re-run it, and give the files new names, because `/img/*` is cached for a year. |
 | `public/img`, `public/video` | Interior stills + 12.8 s hero clip (540×960 H.264, ~700 KB), all cut from the restaurant's opening video. `public/luna-dine-menu.pdf` is the downloadable printed menu. |
 
 ## Gotchas (read before editing)

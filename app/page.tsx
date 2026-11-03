@@ -41,7 +41,7 @@ const STORY = "From a dream taking shape to a room filled with *warm* *light.* H
 const jsonLd = {
   "@context": "https://schema.org", "@type": "Restaurant", name: SITE.name, slogan: SITE.tagline,
   servesCuisine: ["Chinese", "Indian", "Bengali", "Thai", "Korean", "Mughlai"],
-  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: `${SITE.url}/img/og.jpg`,
+  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: `${SITE.url}/img/og-home.jpg`,
   address: { "@type": "PostalAddress", streetAddress: "140/2 Salkia School Road, Opposite Ghasbagan Maidan, near Sansaraa", addressLocality: "Howrah", addressRegion: "West Bengal", postalCode: "711101", addressCountry: "IN" },
   geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
   hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
