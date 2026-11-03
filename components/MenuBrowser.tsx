@@ -29,8 +29,9 @@ const SECTION_FLAGS = new Map(MENU_ISSUES.flatMap((iss, i) => (iss.section ? [[i
 /* Diet filter. Drinks ("x") are neither veg nor non-veg, so they show in every mode. */
 type Mode = "all" | "v" | "n";
 const MODES: [Mode, string][] = [["all", "All"], ["v", "Veg"], ["n", "Non-veg"]];
+const titleIn = (s: (typeof MENU)[number], mode: Mode) => (mode !== "all" && s.titles?.[mode]) || s.title;
 const filterMenu = (mode: Mode) => MENU
-  .map(s => ({ ...s, groups: s.groups.filter(g => mode === "all" || g.t === "x" || g.t === mode) }))
+  .map(s => ({ ...s, title: titleIn(s, mode), groups: s.groups.filter(g => mode === "all" || g.t === "x" || g.t === mode) }))
   .filter(s => s.groups.length)
   .map(s => ({
     ...s,
@@ -53,6 +54,18 @@ const DIET_COUNTS = new Map(MENU.map(s => [s.id, {
 const SEC_PHASE = new Map<string, Record<string, string>>(MENU.map(s => [s.id, {}]));
 (["all", "v", "n"] as Mode[]).forEach(m => FILTERED[m].forEach((s, i, a) => { SEC_PHASE.get(s.id)![m === "all" ? "--pa" : `--p${m}`] = phaseOf(i, a.length); }));
 const shown = (el: Element) => el.getClientRects().length > 0; // false when the filter hides it
+/** A section's title in the list. The list is rendered once, so a section whose name depends on the filter
+ *  carries all its names and CSS shows the one for the current filter (.tm in globals.css). */
+const SecTitle = ({ id }: { id: string }) => {
+  const s = MENU.find(x => x.id === id)!;
+  if (!s.titles) return <>{s.title}</>;
+  return <>{(["all", "v", "n"] as Mode[]).map(m => <span key={m} className="tm" data-m={m}>{titleIn(s, m)}</span>)}</>;
+};
+/** the section title as it reads on screen right now */
+const titleNow = (head: Element) => {
+  const h = head.querySelector("h2");
+  return ([...(h?.querySelectorAll(".tm") ?? [])].find(shown) ?? h)?.textContent ?? "";
+};
 
 /** Page Y of an element from layout (offsetTop chain), unaffected by transforms. */
 const docTop = (el: HTMLElement) => {
@@ -154,8 +167,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       : el.classList.contains("mnote") ? "note"
       : el.dataset.id ? `c|${el.dataset.id}`
       : `s|${el.closest(".msec")?.id}`;
-  type Box = { x: number; y: number; h: number; vis: boolean };
-  type Snap = { pos: Map<string, Box>; cards: Map<string, Box>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number; stuck: string | null };
+  type Box = { x: number; y: number; h: number; vis: boolean; t?: string };
+  type Snap = { pos: Map<string, Box>; cards: Map<string, Box>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number; stuck: string | null; stuckT: string; row: DOMRect | null };
   const snap = useRef<Snap | null>(null);
   const layers = useRef(new Set<() => void>()); // cleanup for each live layer of copies
   const freezers = useRef(new Set<() => void>()); // stop a layer following the scroll
@@ -180,7 +193,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     const take = (el: HTMLElement, visible: (r: DOMRect) => boolean) => {
       if (!shown(el) || el === stuck) return;
       const r = el.getBoundingClientRect(), k = keyOf(el), vis = visible(r); // on-screen rects, mid-animation included
-      pos.set(k, { x: r.left, y: r.top, h: r.height, vis });
+      pos.set(k, { x: r.left, y: r.top, h: r.height, vis, t: el.classList.contains("msec__head") ? titleNow(el) : undefined });
       if (vis) seen.push({ k, el, r });
     };
     b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => take(el, r => r.bottom > line && r.top < vh));
@@ -189,7 +202,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     if (cardsOn()) b.querySelectorAll<HTMLElement>(".msec").forEach(el => { if (shown(el)) cards.set(el.id, cardBox(el, line)); });
     // that's the screen as it is; now drop running animations so the new ones start from exactly here
     [...ourAnims(b), ...ourAnims(bar.current)].forEach(a => a.cancel());
-    return { pos, cards, seen, line, stuck: stuck?.closest(".msec")?.id ?? null };
+    return { pos, cards, seen, line, stuck: stuck?.closest(".msec")?.id ?? null, stuckT: stuck ? titleNow(stuck) : "", row: cr ?? null };
   };
 
   /** A layer for copies of what left, clipped to the reading area. It keeps up with any scrolling while they fade,
@@ -212,6 +225,69 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     return { inner, top };
   };
 
+  /* ---- the section chips row (desktop/tablet) ----
+     The current section's chip is always in view: it's centred whenever the section changes, and right at a filter
+     switch, before the chips move, so it glides straight to its place with the rest. Centring measures layout
+     (offsetLeft inside .cats), so chips mid-animation can't throw it off. If you scroll the row away yourself, it
+     glides back to the current section after a few quiet seconds (not while the pointer is on it or a chip has
+     keyboard focus). */
+  const progUntil = useRef(0); // scroll events on the row before this time are ours, not the reader's
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const centerChip = (id: string, smooth: boolean) => {
+    const c = chips.current, a = c?.querySelector<HTMLElement>(`[data-id="${id}"]`);
+    if (!c || !a || !c.clientWidth) return;
+    const left = Math.max(0, Math.min(c.scrollWidth - c.clientWidth, a.offsetLeft + a.offsetWidth / 2 - c.clientWidth / 2));
+    if (Math.abs(left - c.scrollLeft) < 1) return;
+    const calm = smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    progUntil.current = performance.now() + (calm ? 1000 : 120);
+    c.scrollTo({ left, behavior: calm ? "smooth" : "auto" });
+  };
+  /** the section crossing the line under the bar (the scrollspy's rule); sections hidden by the filter don't count */
+  const spyId = () => {
+    const b = body.current;
+    const all = b ? [...b.querySelectorAll<HTMLElement>(".msec")].filter(shown) : [];
+    const line = barH() + 40;
+    let id = all[0]?.id ?? MENU[0].id;
+    all.forEach(s => { if (s.getBoundingClientRect().top - line <= 0) id = s.id; });
+    return id;
+  };
+  /* on a filter switch: chips that stay glide sideways to their new places, chips that go fade and shrink where
+     they were (copies, over the row) while their neighbours close the gap, and new chips grow in as their
+     neighbours slide apart. Calm, no overshoot. */
+  const animateChips = (sn: Snap) => {
+    const c = chips.current, cr = c?.getBoundingClientRect();
+    if (!c || !cr || !cr.width) return;
+    const inRow = (x: number, w: number) => x + w > cr.left && x < cr.right;
+    const kept = new Set<string>();
+    c.querySelectorAll<HTMLElement>(":scope > button").forEach(el => {
+      const k = keyOf(el), r = el.getBoundingClientRect(), o = sn.pos.get(k), vis = inRow(r.left, r.width);
+      if (o) kept.add(k);
+      if (o && (o.vis || vis) && Math.abs(o.x - r.left) < cr.width) {
+        if (Math.abs(o.x - r.left) >= 1) el.animate([{ transform: `translateX(${o.x - r.left}px)` }, { transform: "none" }],
+          { duration: 520, delay: 40, easing: GLIDE, fill: "backwards" });
+      } else if (vis) el.animate([{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }],
+        { duration: 420, delay: 160, easing: EASE, fill: "backwards" });
+    });
+    const gone = sn.seen.filter(g => g.k.startsWith("c|") && !kept.has(g.k));
+    if (!gone.length || !sn.row) return;
+    const row = sn.row, layer = document.createElement("div");
+    layer.className = "mchipghosts";
+    layer.style.cssText = `left:${row.left}px;top:${row.top}px;width:${row.width}px;height:${row.height}px`;
+    gone.forEach(g => {
+      const copy = g.el.cloneNode(true) as HTMLElement;
+      copy.removeAttribute("data-v"); copy.removeAttribute("data-n"); // or the filter's CSS would hide the copy too
+      copy.style.cssText = `position:absolute;left:${g.r.left - row.left}px;top:${g.r.top - row.top}px;width:${g.r.width}px;height:${g.r.height}px;margin:0`;
+      layer.appendChild(copy);
+      copy.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.6)" }],
+        { duration: 240, easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
+    });
+    document.body.appendChild(layer);
+    const done = () => { layer.remove(); layers.current.delete(done); };
+    layers.current.add(done);
+    setTimeout(done, 320);
+  };
+
   const animateSwitch = (sn: Snap) => {
     const b = body.current;
     if (!b) return;
@@ -222,6 +298,11 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       { transform: "none" },
     ], { duration: 560, delay: 80, easing: GLIDE, fill: "backwards" }); // after the leavers have mostly gone
     let n = 0;
+    const retitle = (head: HTMLElement) => head.querySelector("h2")?.animate([
+      { opacity: 0, transform: "translateY(10px) scale(.96,.6)", transformOrigin: "0 60%" },
+      { opacity: 1, transform: "scale(1.01,1.05)", transformOrigin: "0 60%", offset: 0.6 },
+      { opacity: 1, transform: "none", transformOrigin: "0 60%" },
+    ], { duration: 520, delay: 120, easing: EASE, fill: "backwards" });
     const enter = (el: HTMLElement) => {
       const delay = 100 + Math.min(n++ * 28, 280), o = { transformOrigin: "0 50%" };
       el.animate([
@@ -244,16 +325,18 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         staying.add(k);
         const dx = o.x - r.left, dy = o.y - r.top;
         if (Math.abs(dx) + Math.abs(dy) >= 1) glide(el, dx, dy);
+        if (o.t !== undefined && vis && titleNow(el) !== o.t) retitle(el); // e.g. "Biryani & Pulao" -> "Rice & Pulao"
       } else {
         if (!o?.vis) staying.add(k); // wasn't on screen: nothing to take away
         if (vis) enter(el);
       }
     };
     b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => move(el, r => r.bottom > line - 40 && r.top < vh));
-    const c = chips.current, cr = c?.getBoundingClientRect();
-    c?.querySelectorAll<HTMLElement>(":scope > button").forEach(el => move(el, r => !!cr && r.right > cr.left && r.left < cr.right));
-    // phones: a different section's title is now stuck under the bar: its words fade up
+    animateChips(sn);
+    // phones: a different section's title is now stuck under the bar: its words fade up (or just the title, if
+    // it's the same section under a new name)
     if (stuck && stuck.closest(".msec")?.id !== sn.stuck) [...stuck.children].forEach(ch => enter(ch as HTMLElement));
+    else if (stuck && titleNow(stuck) !== sn.stuckT) retitle(stuck);
 
     // desktop: paper cards stretch or shrink from their old box to the new one; one that went away fades out behind
     const gonecards: Box[] = [];
@@ -288,6 +371,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         const copy = g.el.cloneNode(true) as HTMLElement;
         if (copy.classList.contains("msec__head")) {
           copy.style.position = "static";
+          const h = copy.querySelector("h2"), t = sn.pos.get(g.k)?.t;
+          if (h && t) h.textContent = t; // its name as it was (the copy would follow the new filter)
           const m = g.el.querySelector(".mphase"), mc = copy.querySelector<HTMLElement>(".mphase");
           if (m && mc) mc.style.setProperty("--p", getComputedStyle(m).getPropertyValue("--p")); // keep its moon
         }
@@ -356,13 +441,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     let ticking = false;
     const frame = () => {
       ticking = false;
-      const b = body.current;
-      if (!b) return;
-      const line = barH() + 40;
-      const all = [...b.querySelectorAll<HTMLElement>(".msec")].filter(shown); // sections hidden by the filter don't count
-      let id = all[0]?.id ?? MENU[0].id;
-      all.forEach(s => { if (s.getBoundingClientRect().top - line <= 0) id = s.id; });
-      setActive(id);
+      if (!body.current) return;
+      setActive(spyId());
     };
     const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
     addEventListener("scroll", req, { passive: true });
@@ -386,14 +466,22 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     return () => { c.removeEventListener("scroll", upd); removeEventListener("resize", upd); };
   }, [secs]);
 
-  /* keep the active chip in view */
+  /* keep the current section's chip in view */
+  useEffect(() => { centerChip(active, true); }, [active]);
+  /* scrolled the row away? it glides back to the current section after a few quiet seconds */
   useEffect(() => {
-    const c = chips.current, a = c?.querySelector<HTMLElement>(`[data-id="${active}"]`);
-    if (!c || !a) return;
-    // measured against the row itself (offsetLeft would count from the sticky bar and include the filter's width)
-    const cr = c.getBoundingClientRect(), ar = a.getBoundingClientRect();
-    c.scrollTo({ left: c.scrollLeft + ar.left - cr.left - (cr.width - ar.width) / 2, behavior: "smooth" });
-  }, [active]);
+    const c = chips.current;
+    if (!c) return;
+    let t = 0;
+    const back = () => {
+      if (c.matches(":hover") || c.querySelector(":focus-visible")) { arm(); return; } // still looking: wait
+      centerChip(activeRef.current, true);
+    };
+    const arm = () => { clearTimeout(t); t = window.setTimeout(back, 2500); };
+    const onScroll = () => { if (performance.now() > progUntil.current) arm(); };
+    c.addEventListener("scroll", onScroll, { passive: true });
+    return () => { clearTimeout(t); c.removeEventListener("scroll", onScroll); };
+  }, []);
 
   /* phone section sheet: lock the page behind it, close on Escape, move focus in and back out */
   useEffect(() => {
@@ -484,6 +572,10 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       const top = Math.max(0, Math.round(y));
       lenis ? lenis.scrollTo(top, { immediate: true, force: true }) : window.scrollTo(0, top);
     }
+    // the section you're in now, and its chip centred at once, so the chip animation glides it straight there
+    const id = spyId();
+    setActive(id);
+    centerChip(id, false);
     const sn = snap.current;
     snap.current = null;
     if (sn) animateSwitch(sn); // after the scroll is restored, so old and new places are both screen positions
@@ -526,7 +618,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     <section key={sec.id} id={sec.id} className="msec" {...DIET_COUNTS.get(sec.id)} style={SEC_PHASE.get(sec.id) as React.CSSProperties}>
       <header className="msec__head">
         <small><i className="mphase" aria-hidden="true" />{sec.kicker}</small>
-        <h2>{sec.title}</h2>
+        <h2><SecTitle id={sec.id} /></h2>
         {review && SECTION_FLAGS.has(sec.id) && (
           <p className={pulse === SECTION_FLAGS.get(sec.id) ? "msec__flag pulse" : "msec__flag"}>
             <i className="flag__q">?</i>{MENU_ISSUES[SECTION_FLAGS.get(sec.id)!].detail}

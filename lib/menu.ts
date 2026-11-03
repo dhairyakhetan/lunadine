@@ -6,7 +6,8 @@
 export type Diet = "v" | "n" | "x";
 export type MenuItem = [name: string, price: number | "MRP", note?: string];
 export type MenuGroup = { label: string; t: Diet; items: MenuItem[] };
-export type MenuSection = { id: string; title: string; kicker: string; groups: MenuGroup[] };
+/** `titles`: what the section is called under the Veg (`v`) or Non-veg (`n`) filter, when that differs from `title`. */
+export type MenuSection = { id: string; title: string; titles?: { v?: string; n?: string }; kicker: string; groups: MenuGroup[] };
 
 export const MENU: MenuSection[] = [
   { id: "soup", title: "Soup", kicker: "To begin", groups: [
@@ -86,7 +87,7 @@ export const MENU: MenuSection[] = [
       ["Chicken Kalmi Kabab", 340, "4 pc"], ["Chicken Tangri Kabab", 340, "4 pc"], ["Ajwaini Fish Tikka", 350, "6 pc"],
       ["Fish Hariyali", 360, "6 pc"], ["Pomfret Tandoori", 400, "2 pc"], ["Jhinga Kabab (Prawn)", 400, "8 pc"] ]}
   ]},
-  { id: "biryani", title: "Biryani & Pulao", kicker: "Indian main course", groups: [
+  { id: "biryani", title: "Biryani & Pulao", titles: { v: "Rice & Pulao", n: "Biryani" }, kicker: "Indian main course", groups: [
     { label: "Biryani", t: "n", items: [
       ["Chicken Biryani", 240], ["Chicken Special Biryani", 310], ["Mutton Biryani", 330],
       ["Mutton Biryani Special", 400], ["Egg Biryani", 200] ]},
@@ -94,7 +95,7 @@ export const MENU: MenuSection[] = [
       ["Steam Rice", 180], ["Jeera Rice", 200], ["Veg Pulao", 220], ["Peas Pulao", 210],
       ["Paneer Pulao", 220], ["Kashmiri Pulao", 250] ]}
   ]},
-  { id: "indian-veg", title: "Indian Curries — Veg", kicker: "Indian side dishes", groups: [
+  { id: "indian-veg", title: "Indian Curries — Veg", titles: { v: "Indian Curries" }, kicker: "Indian side dishes", groups: [
     { label: "Veg", t: "v", items: [
       ["Mix Veg", 240], ["Veg Jalfrezi", 270], ["Veg Kolhapuri", 280], ["Veg Dewani Handi", 280],
       ["Paneer Butter Masala", 280], ["Palak Paneer", 270], ["Kadhai Paneer", 290], ["Paneer Do Pyaza", 280],
@@ -102,7 +103,7 @@ export const MENU: MenuSection[] = [
       ["Paneer Pasanda", 340], ["Mushroom Masala", 250], ["Plain Dal", 120], ["Dal Fry", 180],
       ["Yellow Dal Ghee Tadka", 220], ["Dal Makhani", 350] ]}
   ]},
-  { id: "indian-nonveg", title: "Indian Curries — Non-Veg", kicker: "Indian side dishes", groups: [
+  { id: "indian-nonveg", title: "Indian Curries — Non-Veg", titles: { n: "Indian Curries" }, kicker: "Indian side dishes", groups: [
     { label: "Chicken", t: "n", items: [
       ["Chicken Kosha", 280, "4 pc w/b"], ["Chicken Masala", 300, "4 pc w/b"], ["Chicken Do Pyaza", 290, "4 pc w/b"],
       ["Kadhai Chicken", 290, "4 pc w/b"], ["Tandoori Chicken Butter Masala — Full", 600, "8 pc"],

@@ -348,7 +348,7 @@ em,.it{font-style:italic;color:var(--gold)}
 /* --fl / --fr: edge fades, set by MenuBrowser only while chips are hidden past that edge */
 @property --fl{syntax:"<length>";inherits:false;initial-value:0px}
 @property --fr{syntax:"<length>";inherits:false;initial-value:0px}
-.cats{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 20px;mask-image:linear-gradient(90deg,transparent,#000 var(--fl),#000 calc(100% - var(--fr)),transparent);transition:--fl .3s,--fr .3s}
+.cats{position:relative;flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 20px;mask-image:linear-gradient(90deg,transparent,#000 var(--fl),#000 calc(100% - var(--fr)),transparent);transition:--fl .3s,--fr .3s}
 /* All / Veg / Non-veg filter */
 .mfilter{position:relative;isolation:isolate;flex:none;display:flex;gap:2px;padding:4px;border-radius:999px;border:1px solid var(--line);background:rgba(244,236,218,.04)}
 .mfilter button{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;transition:background .3s,color .3s}
@@ -365,6 +365,13 @@ em,.it{font-style:italic;color:var(--gold)}
 /* copies of dishes leaving on a filter switch, squashing out where they were (MenuBrowser) */
 .mghosts{position:fixed;left:0;right:0;bottom:0;z-index:25;overflow:hidden;pointer-events:none;color:var(--ink)}
 .mghosts--back{z-index:-1} /* behind the menu: a card that went away */
+/* copies of section chips leaving on a filter switch, over the sticky bar's chips row */
+.mchipghosts{position:fixed;z-index:31;overflow:hidden;pointer-events:none}
+.mchipghosts>button{padding:8px 16px;border-radius:999px;font-size:14px;color:var(--muted);white-space:nowrap}
+.mchipghosts>button.on{color:var(--night);background:var(--cream)}
+/* a section whose name depends on the filter carries all its names; show the current one (MenuBrowser SecTitle) */
+.tm{display:none}
+html:not(.diet-v):not(.diet-n) .tm[data-m=all],.diet-v .tm[data-m=v],.diet-n .tm[data-m=n]{display:inline}
 .mghost-card{position:absolute;border-radius:20px;transform-origin:50% 0;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply}
 .mfilter .vg{background:var(--cream)}
 /* the Veg / Non-veg filter: html.diet-v / .diet-n (set before first paint by layout.tsx, then by MenuBrowser)
