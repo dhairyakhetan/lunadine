@@ -4,6 +4,7 @@ import PageFX from "@/components/PageFX";
 import MenuBrowser from "@/components/MenuBrowser";
 import { Emblem, Wordmark } from "@/components/Brand";
 import { ISeal, ILeaf } from "@/components/Icons";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Menu — Chinese, Tandoor, Bengali, Thai & Korean in Salkia, Howrah",
@@ -44,7 +45,7 @@ export default function MenuPage() {
         </div>
       </header>
       <main>
-        <MenuBrowser />
+        <MenuBrowser prodHost={new URL(SITE.url).hostname} />
       </main>
     </>
   );

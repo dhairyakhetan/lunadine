@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MENU, type Diet } from "@/lib/menu";
 import { MENU_ISSUES } from "@/lib/menu-issues";
-import { SITE } from "@/lib/site";
 import { IAlert, IClose } from "./Icons";
 
 const Veg = ({ t }: { t: Diet }) => (t === "v" ? <i className="vg" title="Veg" /> : t === "n" ? <i className="vg n" title="Non-veg" /> : null);
@@ -10,9 +9,9 @@ const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
 
 /* Review mode: the "Menu issues" button and inline flags. Off on the production domain unless the
    URL has ?review, so customers never see it; on localhost and preview deploys it's always on. */
-const isReview = () => {
+const isReview = (prodHost: string) => {
   try {
-    return new URLSearchParams(location.search).has("review") || location.hostname !== new URL(SITE.url).hostname;
+    return new URLSearchParams(location.search).has("review") || location.hostname !== prodHost;
   } catch { return false; }
 };
 const FLAGS = new Map<string, number[]>();
@@ -26,7 +25,8 @@ const docTop = (el: HTMLElement) => {
   return y;
 };
 
-export default function MenuBrowser() {
+/** `prodHost`: the production hostname, resolved on the server at build time (env vars aren't available here). */
+export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const [active, setActive] = useState(MENU[0].id);
   const [review, setReview] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
@@ -70,7 +70,7 @@ export default function MenuBrowser() {
   }, [active]);
 
   /* review mode */
-  useEffect(() => { setReview(isReview()); }, []);
+  useEffect(() => { setReview(isReview(prodHost)); }, [prodHost]);
   useEffect(() => {
     if (!issuesOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIssuesOpen(false); };

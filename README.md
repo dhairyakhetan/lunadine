@@ -14,7 +14,7 @@ npm run build   # production build
 | What | File |
 |---|---|
 | Menu items and prices (the menu page and dish counts update from this) | `lib/menu.ts` |
-| Phone, address, socials, map, **site URL** (set the real domain after launch) | `lib/site.ts` |
+| Phone, address, socials, map, site URL (automatic on Vercel) | `lib/site.ts` |
 | Home page (hero, story, room gallery, signature dishes, visit) | `app/page.tsx` |
 | Menu page (the QR menu: section chips + sections only) | `app/menu/page.tsx`, `components/MenuBrowser.tsx` |
 | Scroll effects / smooth scroll / starfield / nav | `components/PageFX.tsx`, `SmoothScroll.tsx`, `Sky.tsx`, `Nav.tsx` |
@@ -35,4 +35,4 @@ npm run build   # production build
   - "Dewani" vs "Diwani" Handi.
   - The non-veg Chinese gravy section had 3 rows printed twice.
   - Prices to confirm: Egg Fried Rice ₹250 vs Egg Schezwan ₹240; Cucumber Salad ₹150.
-- `SITE.url` in `lib/site.ts` is a placeholder (`lunadine.vercel.app`). It's used for the sitemap, Open Graph and structured data.
+- `SITE.url` in `lib/site.ts` is set automatically on Vercel from the production domain (`VERCEL_PROJECT_PRODUCTION_URL`). If you add a custom domain, make it the production domain in Vercel and redeploy, and share previews will follow.

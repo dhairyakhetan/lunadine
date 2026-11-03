@@ -25,7 +25,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 | Path | What |
 |---|---|
 | `lib/menu.ts` | **Source of truth for the menu.** `MENU` array of sections → groups → items `[name, price, note?]`. `t`: `"v"` veg, `"n"` non-veg, `"x"` neutral (drinks). `TOTAL_DISHES` and `TOTAL_SECTIONS` are derived from it, so don't hardcode counts anywhere. |
-| `lib/site.ts` | Phone, email, address, map links, socials, `url` (placeholder: set it to the real domain) |
+| `lib/site.ts` | Phone, email, address, map links, socials, and `url`. `url` comes from Vercel's `VERCEL_PROJECT_PRODUCTION_URL` at build time, so OG images, the sitemap and JSON-LD always use the live domain. It's server-only, so pass values to client components as props. |
 | `app/layout.tsx` | Fonts, metadata/OG, the inline intro-skip script, `<SmoothScroll/>` |
 | `app/page.tsx` | Home: intro → hero (starfield + arch video) → marquee → story (moon + word lighting) → "The Room" horizontal gallery → signature dishes → visit/map → footer + mobile dock. Also holds the JSON-LD `Restaurant` schema. |
 | `app/menu/page.tsx` + `components/MenuBrowser.tsx` | QR menu: small header (logo, kitchen promise), then a client component with sticky section chips (scrollspy) and the menu sections. Review mode lives here too. |
@@ -53,7 +53,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 - **Logo:** `components/Brand.tsx` holds paths vector-traced from the printed menu. They use `currentColor`. Don't redraw or restyle the mark.
 
 ## Review mode (menu issues)
-`lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a floating **Menu issues** button (bottom right) opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host in `SITE.url` (so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
+`lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a floating **Menu issues** button (bottom right) opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host (passed from the server as `prodHost`, so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
 
 ## Kitchen promise
 Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for the vegetarian menu. Don't extend or reword them as stronger claims without the owner.
