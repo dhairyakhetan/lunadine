@@ -6,7 +6,7 @@ import Nav from "@/components/Nav";
 import Sky from "@/components/Sky";
 import PageFX from "@/components/PageFX";
 import { Footer, Dock } from "@/components/Chrome";
-import { Emblem, Ornament, EMBLEM_D, EMBLEM_VB } from "@/components/Brand";
+import { Emblem, Ornament } from "@/components/Brand";
 import { IArrow, IPhone, IMail, IClock, ISeal, ILeaf, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
 import { TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
 import { SITE } from "@/lib/site";
@@ -126,16 +126,8 @@ export default function Home() {
                 </div>
               </div>
               <span className="hero__moon" aria-hidden="true" />
-              <div className="hero__badge" aria-hidden="true">
-                <svg viewBox="0 0 120 120">
-                  <defs><path id="circ" d="M60,60 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0" /></defs>
-                  <text><textPath href="#circ" textLength="298" lengthAdjust="spacing">Luna Dine ✦ Beyond Fine Dining ✦ Salkia ✦ </textPath></text>
-                </svg>
-                <svg className="c" viewBox={EMBLEM_VB}><path fill="currentColor" fillRule="evenodd" d={EMBLEM_D} /></svg>
-              </div>
             </div>
           </div>
-          <div className="scroll-cue" aria-hidden="true"><i />Scroll</div>
         </section>
 
         <div className="marquee" aria-hidden="true">
