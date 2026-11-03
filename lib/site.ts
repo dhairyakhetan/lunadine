@@ -18,4 +18,8 @@ export const SITE = {
   instagram: "https://www.instagram.com/lunadine_exoticmulticuisine/",
   facebook: "https://www.facebook.com/profile.php?id=61595533162677",
   geo: { lat: 22.59446, lng: 88.34321 },
+  /* Where luna-dine.vercel.app/review sends people (the review QR codes point there, so this can change without
+     reprinting). Replace with the restaurant's own Google review link: Google Business Profile → "Ask for reviews"
+     → copy link (looks like https://g.page/r/XXXXXXXX/review). Until then: the Google Maps listing. */
+  review: "https://www.google.com/maps/search/?api=1&query=Luna%2BDine%2BSalkia%2BHowrah",
 };

@@ -1,13 +1,17 @@
-// Luna Dine QR designs → qr-codes/. Run: node scripts/qr/make.js . qr-codes  (needs Playwright + Chromium, not a project dependency).
-// matrix.json is the QR for https://luna-dine.vercel.app/menu at error level H (version 4, 33×33), made with Python segno:
+// Luna Dine QR designs. Run from the repo root (needs Playwright + Chromium, not a project dependency):
+//   node scripts/qr/make.js . qr-codes menu      → menu codes  (https://luna-dine.vercel.app/menu)
+//   node scripts/qr/make.js . qr-codes/review review → review codes (https://luna-dine.vercel.app/review, which redirects
+//                                                    to the Google review page set as SITE.review in lib/site.ts)
+// matrix-<set>.json is the QR matrix at error level H, made with Python segno:
 //   segno.make(URL, error="h", boost_error=False).matrix  — regenerate it if the URL changes, then re-run this.
 // Keep finder-eye radii small (outer <= ~1.2 modules) and the logo knock-out at 9×9: both were checked with ZXing + OpenCV.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
-const [repo, out] = process.argv.slice(2);
+const [repoArg, outArg, set = 'menu'] = process.argv.slice(2);
+const repo = path.resolve(repoArg), out = path.resolve(outArg);
 fs.mkdirSync(out, { recursive: true });
-const { size: N, m } = JSON.parse(fs.readFileSync(path.join(__dirname, 'matrix.json'), 'utf8'));
+const { size: N, m } = JSON.parse(fs.readFileSync(path.join(__dirname, `matrix-${set}.json`), 'utf8'));
 const f = p => 'file://' + path.join(repo, p);
 
 const brandSrc = fs.readFileSync(path.join(repo, 'components/Brand.tsx'), 'utf8');
@@ -63,7 +67,7 @@ body{position:relative;font-family:LDSans}
 
 const promise = `No Ajinomoto · No trans fat · No food colour`;
 
-const designs = {
+const menuDesigns = {
   // 1. Classic menu-card: paper, navy, thin double gold rule
   'luna-qr-classic': [1000, 1180, `
   <style>
@@ -163,6 +167,91 @@ const designs = {
   <div class="box">${qrSVG({ dot: 'square', qz: 4 })}</div>`],
 };
 
+
+// Google "G" (four-colour mark), for the "review us on Google" designs
+const G = s => `<svg viewBox="0 0 48 48" width="${s}" height="${s}"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const starRow = (n, size, color) => Array.from({ length: n }, () => `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><path fill="${color}" d="M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6L2.5 9.5l6.6-.8z"/></svg>`).join('');
+// the sticker's wavy divider
+const wave = (w, y, amp, fill, stroke) => `<svg class="wave" viewBox="0 0 ${w} ${y + amp * 2}" preserveAspectRatio="none"><path d="M0 0H${w}V${y}C${w * .78} ${y + amp * 1.8} ${w * .55} ${y - amp * 1.2} ${w * .36} ${y + amp * .4}S${w * .08} ${y + amp * 1.6} 0 ${y + amp * .5}Z" fill="${fill}"/>${stroke ? `<path d="M${w} ${y}C${w * .78} ${y + amp * 1.8} ${w * .55} ${y - amp * 1.2} ${w * .36} ${y + amp * .4}S${w * .08} ${y + amp * 1.6} 0 ${y + amp * .5}" fill="none" stroke="${stroke}" stroke-width="5"/>` : ''}</svg>`;
+
+const sticker = ({ band, bandText, accent, ink, bg, line, wordmark }) => `
+  <style>
+  .plate{position:absolute;inset:14px;border-radius:64px;overflow:hidden;background:${bg};box-shadow:0 0 0 2px ${line},0 30px 60px -20px rgba(0,0,0,.35)}
+  .plate::after{content:"";position:absolute;inset:0;border-radius:64px;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.35),rgba(255,255,255,0) 38%,rgba(255,255,255,0) 70%,rgba(255,255,255,.12))}
+  .band{position:absolute;left:0;right:0;top:0;height:420px}
+  .wave{position:absolute;left:0;top:0;width:100%;height:100%}
+  .head{position:absolute;left:0;right:0;top:56px;display:flex;flex-direction:column;align-items:center;gap:18px;color:${bandText}}
+  .g{width:118px;height:118px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .lbl{font-size:30px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;text-align:center;line-height:1.25}
+  .stars{display:flex;gap:8px}
+  .box{position:absolute;left:50%;top:430px;width:560px;margin-left:-280px}
+  .foot{position:absolute;left:0;right:0;bottom:46px;display:flex;flex-direction:column;align-items:center;gap:10px;color:${ink}}
+  .foot .wm{width:200px;height:auto}
+  .foot small{font-size:18px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:${ink};opacity:.62}
+  </style>
+  <div class="plate">
+    <div class="band">${wave(1000, 330, 34, band, accent)}</div>
+    <div class="head"><span class="g">${G(74)}</span><span class="lbl">Leave us your review<br>on Google</span><span class="stars">${starRow(5, 34, accent)}</span></div>
+    <div class="box">${qrSVG({ dot: 'soft', qz: 1.5, fg: ink, eye: ink, pupil: ink })}</div>
+    <div class="foot">${wordmark ? svg('WORDMARK', 'wm') : ''}<small>Scan · Rate · Review</small></div>
+  </div>`;
+
+const reviewDesigns = {
+  // 1. The desk-sticker layout, in Luna colours: navy band, gold wave + stars, cream plate
+  'luna-review-sticker': [1000, 1200, sticker({ band: '#1b2540', bandText: '#f4ecda', accent: '#f3c37c', ink: '#1b2540', bg: '#f7f1e3', line: 'rgba(201,154,79,.8)', wordmark: true })],
+  // 2. The same layout in classic Google blue on white
+  'luna-review-google': [1000, 1200, sticker({ band: '#1a73e8', bandText: '#ffffff', accent: '#fbbc05', ink: '#202124', bg: '#ffffff', line: 'rgba(26,115,232,.35)', wordmark: true })],
+  // 3. Night card
+  'luna-review-night': [1000, 1300, `
+  <style>
+  .card{position:absolute;inset:0;border-radius:40px;overflow:hidden;color:#f4ecda;display:flex;flex-direction:column;align-items:center;padding:90px 90px 0;
+    background:radial-gradient(70% 45% at 50% 0%,rgba(243,195,124,.22),transparent 70%),radial-gradient(90% 60% at 50% 110%,#1b2540,transparent 70%),#080d1b}
+  .frame{position:absolute;inset:26px;border:2px solid rgba(243,195,124,.85);border-radius:28px}
+  .frame2{position:absolute;inset:38px;border:1px solid rgba(243,195,124,.4);border-radius:20px}
+  .emb{width:84px;height:auto;color:#f3c37c}
+  .ttl{font-family:LDSerif;font-size:76px;line-height:1;margin-top:20px;text-align:center}
+  .ttl em{color:#f3c37c}
+  .sub{display:flex;align-items:center;gap:14px;margin-top:20px;font-size:24px;letter-spacing:.08em}
+  .sub .g{width:46px;height:46px;border-radius:50%;background:#fff;display:grid;place-items:center}
+  .stars{display:flex;gap:8px;margin-top:20px}
+  .panel{width:560px;margin-top:34px;padding:24px;border-radius:30px;background:#f4ecda;box-shadow:0 0 0 6px rgba(243,195,124,.9),0 0 60px 10px rgba(243,195,124,.25)}
+  .kick{margin-top:30px;color:rgba(244,236,218,.75);font-size:16px}
+  </style>
+  <div class="card"><div class="stars-bg">${''}</div><div class="stars" style="position:absolute;inset:0">${stars(150)}</div>
+    <div class="frame"></div><div class="frame2"></div>
+    ${svg('EMBLEM', 'emb')}
+    <div class="ttl">Enjoyed your<br><em>evening?</em></div>
+    <div class="sub"><span class="g">${G(30)}</span>Leave us a review on Google</div>
+    <div class="stars" style="position:relative">${starRow(5, 40, '#f3c37c')}</div>
+    <div class="panel">${qrSVG({ dot: 'round', qz: 1.5, eye: '#1b2540', pupil: '#d4694e' })}</div>
+    <div class="kick">Luna Dine · Salkia, Howrah</div>
+  </div>`],
+  // 4. Round moon sticker
+  'luna-review-moon': [1200, 1200, `
+  <style>
+  .disc{position:absolute;inset:20px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#1b2540,#080d1b 70%);box-shadow:0 0 0 8px #d59a3c,0 0 0 11px #080d1b,0 0 0 13px rgba(243,195,124,.6)}
+  .ring{position:absolute;inset:0;width:100%;height:100%}
+  .moonface{position:absolute;left:50%;top:50%;width:700px;height:700px;margin:-350px 0 0 -350px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffaf0,#f4ecda 55%,#eadcbb);box-shadow:0 0 70px 18px rgba(243,195,124,.45),inset 0 0 40px rgba(201,154,79,.35)}
+  .box{position:absolute;left:50%;top:50%;width:470px;margin:-250px 0 0 -235px}
+  .under{position:absolute;left:0;right:0;top:50%;margin-top:236px;display:flex;justify-content:center;gap:6px}
+  </style>
+  <div class="disc"><div class="stars" style="position:absolute;inset:0;border-radius:50%;overflow:hidden">${stars(110)}</div></div>
+  <svg class="ring" viewBox="0 0 1200 1200">
+    <defs><path id="c" d="M600,600 m-455,0 a455,455 0 1,1 910,0 a455,455 0 1,1 -910,0"/></defs>
+    <circle cx="600" cy="600" r="505" fill="none" stroke="rgba(243,195,124,.55)" stroke-width="1.5"/>
+    <circle cx="600" cy="600" r="405" fill="none" stroke="rgba(243,195,124,.35)" stroke-width="1"/>
+    <text font-family="LDSans" font-size="40" font-weight="500" letter-spacing="9" fill="#f3c37c"><textPath href="#c" startOffset="0" textLength="2830" lengthAdjust="spacing">LOVED IT? ✦ REVIEW US ON GOOGLE ✦ LUNA DINE ✦ SALKIA ✦</textPath></text>
+  </svg>
+  <div class="moonface"></div>
+  <div class="box">${qrSVG({ dot: 'round', qz: 0 })}</div>
+  <div class="under">${starRow(5, 30, '#c99a4f')}</div>`],
+  // 5. Plain
+  'luna-review-plain': [1000, 1000, `<style>body{background:#fff}.box{position:absolute;inset:0}</style><div class="box">${qrSVG({ dot: 'square', qz: 4 })}</div>`],
+};
+const designs = set === 'review' ? reviewDesigns : menuDesigns;
+const plainName = set === 'review' ? 'luna-review-plain' : 'luna-qr-plain';
+const svgName = set === 'review' ? 'luna-review-qr.svg' : 'luna-qr.svg';
+
 (async () => {
   const b = await chromium.launch();
   for (const [name, [w, h, html]] of Object.entries(designs)) {
@@ -171,12 +260,12 @@ const designs = {
     fs.writeFileSync(file, `<!doctype html><html><head><meta charset="utf-8"><style>${base(w, h)}</style></head><body>${html}</body></html>`);
     await p.goto('file://' + file, { waitUntil: 'load' });
     await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(200);
-    await p.screenshot({ path: path.join(out, name + '.png'), omitBackground: name !== 'luna-qr-plain' });
+    await p.screenshot({ path: path.join(out, name + '.png'), omitBackground: name !== plainName });
     await p.pdf({ path: path.join(out, name + '.pdf'), width: w + 'px', height: h + 'px', printBackground: true, pageRanges: '1' });
     fs.unlinkSync(file);
     await p.close();
   }
   // standalone vector of the code itself
-  fs.writeFileSync(path.join(out, 'luna-qr.svg'), `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSVG({ dot: 'square', qz: 4 }).replace('<svg class="qr"', '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" style="background:#fff"'));
+  fs.writeFileSync(path.join(out, svgName), `<?xml version="1.0" encoding="UTF-8"?>\n` + qrSVG({ dot: 'square', qz: 4 }).replace('<svg class="qr"', '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" style="background:#fff"'));
   await b.close();
 })();

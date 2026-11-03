@@ -28,6 +28,8 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 |---|---|
 | `lib/menu.ts` | **Source of truth for the menu.** `MENU` array of sections → groups → items `[name, price, note?]`. `t`: `"v"` veg, `"n"` non-veg, `"x"` neutral (drinks). `TOTAL_DISHES` and `TOTAL_SECTIONS` are derived from it, so don't hardcode counts anywhere. |
 | `lib/site.ts` | Phone, email, address, map links, socials, and `url` (**`https://luna-dine.vercel.app`**). `url` drives OG images, the sitemap and JSON-LD, and review mode stays hidden on that host. Change it if the domain changes, then redeploy. |
+| `/review` (redirect in `next.config.ts`) | Where the **review QR codes** point. It's a temporary (307) redirect to `SITE.review` in `lib/site.ts`, so the Google review link can change without reprinting. That's the Maps listing until the owner supplies the Business Profile "Ask for reviews" link (`g.page/r/…/review`). |
+| `qr-codes/`, `qr-codes/review/`, `scripts/qr/` | Printable QR designs (PNG/PDF/SVG) for `/menu` and `/review`, plus their generator. They're not served by the site. |
 | `app/layout.tsx` | Fonts, metadata/OG, the inline intro-skip script, `<SmoothScroll/>` |
 | `app/page.tsx` | Home: intro → hero (starfield + arch video, moon rises behind the arch) → marquee → story (moon + word lighting) → "The Room" (pinned "Step inside" arches, then the horizontal gallery) → signature dishes → visit/map → footer + mobile dock. Also holds the JSON-LD `Restaurant` schema. |
 | `app/menu/page.tsx` + `components/MenuBrowser.tsx` | QR menu: small header (logo, kitchen promise), then a client component with sticky section chips (scrollspy) and the menu sections. Review mode lives here too. |
