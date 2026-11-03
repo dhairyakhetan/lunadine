@@ -16,14 +16,14 @@ npm run build   # production build
 | Menu items and prices (the menu page and dish counts update from this) | `lib/menu.ts` |
 | Phone, address, socials, map, **site URL** (set the real domain after launch) | `lib/site.ts` |
 | Home page (hero, story, room gallery, signature dishes, visit) | `app/page.tsx` |
-| Menu page; search, filter and scrollspy | `app/menu/page.tsx`, `components/MenuBrowser.tsx` |
+| Menu page (the QR menu: section chips + sections only) | `app/menu/page.tsx`, `components/MenuBrowser.tsx` |
 | Scroll effects / smooth scroll / starfield / nav | `components/PageFX.tsx`, `SmoothScroll.tsx`, `Sky.tsx`, `Nav.tsx` |
 | Styles | `app/globals.css` |
 | Logo SVG paths (traced from the printed menu) | `components/Brand.tsx` |
 | Photos, video, PDF menu | `public/` |
 
 ## Handoff notes
-- **Menu toolbar:** after a search or filter while the toolbar is pinned, the page jumps so the results start just under the toolbar (and under the nav when it's showing). Verified at 1440×900 and 390×844.
+- **QR menu:** `/menu` is the page the table QR codes open. It's only the menu, with no nav, search or filters.
 - **Menu issues / review mode:** open `/menu?review` (or any preview deploy) to see the **Menu issues** button and the flagged dishes. The list lives in `lib/menu-issues.ts`.
 - **Opening hours:** unknown, so the site doesn't show any.
 - **Menu questions still waiting on the owner** (the items are left as printed until answered):
