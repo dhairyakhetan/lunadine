@@ -1,13 +1,12 @@
 /* Open questions about the menu text and prices, shown only in review mode
    (the "Menu issues" button on /menu; see MenuBrowser). Remove an entry once the owner answers it.
-   `items` are exact names from lib/menu.ts that get flagged inline; `q` is what "Show" searches for. */
+   `items` are exact names from lib/menu.ts that get flagged inline ("Show" jumps to the first). */
 
 export type MenuIssue = {
   title: string;
   detail: string;
   source: "card" | "review"; // "card": queried from the printed card; "review": spotted while reviewing the site
   items?: string[];
-  q?: string;
   section?: string; // section id to jump to when there's nothing to search for
 };
 

@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 import { SITE } from "./lib/site";
 
-const longCache = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
-
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: { formats: ["image/avif", "image/webp"] },
@@ -11,10 +9,8 @@ const nextConfig: NextConfig = {
     return [{ source: "/review", destination: SITE.review, permanent: false }];
   },
   async headers() {
-    return [
-      { source: "/img/:path*", headers: longCache },
-      { source: "/video/:path*", headers: longCache },
-    ];
+    // a year, immutable: give a changed file a new name
+    return [{ source: "/:dir(img|video)/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] }];
   },
 };
 

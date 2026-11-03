@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PageFX from "@/components/PageFX";
 import MenuBrowser from "@/components/MenuBrowser";
 import { Emblem, Wordmark } from "@/components/Brand";
-import { ISeal, ILeaf } from "@/components/Icons";
+import { KitchenPromise } from "@/components/Chrome";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -28,7 +27,6 @@ export const metadata: Metadata = {
 export default function MenuPage() {
   return (
     <>
-      <PageFX noIntro />
       <header className="qhead">
         <div className="wrap">
           <div className="qhead__arch">
@@ -38,12 +36,7 @@ export default function MenuPage() {
             </Link>
             <h1>Menu</h1>
           </div>
-          <ul className="promise" aria-label="Our kitchen promise">
-            <li><ISeal />No Ajinomoto</li>
-            <li><ISeal />No trans fat</li>
-            <li><ISeal />No food colour</li>
-            <li className="promise__veg"><ILeaf />Separate chef &amp; utensils for our vegetarian menu</li>
-          </ul>
+          <KitchenPromise className="promise" />
         </div>
       </header>
       <main>
