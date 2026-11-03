@@ -31,8 +31,9 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 | `app/layout.tsx` | Fonts, metadata/OG, the inline intro-skip script, `<SmoothScroll/>` |
 | `app/page.tsx` | Home: intro → hero (starfield + arch video) → marquee → story (moon + word lighting) → "The Room" horizontal gallery → signature dishes → visit/map → footer + mobile dock. Also holds the JSON-LD `Restaurant` schema. |
 | `app/menu/page.tsx` + `components/MenuBrowser.tsx` | QR menu: small header (logo, kitchen promise), then a client component with sticky section chips (scrollspy) and the menu sections. Review mode lives here too. |
-| `components/PageFX.tsx` | Page-level scroll effects (reveals, count-up, story/moon, pinned horizontal room, lazy map, video play-on-screen, dock/to-top, in-page `#anchor` smooth scroll). Runs on whatever markup the page has and cleans up on unmount. |
-| `components/SmoothScroll.tsx` | Lenis instance on `window.LD.lenis`. Handles scroll-to-top / `#hash` on client-side navigation. |
+| `components/PageFX.tsx` | Page-level scroll effects (reveals, count-up, story/moon, lazy map, video play-on-screen, dock/to-top). Runs on whatever markup the page has and cleans up on unmount. |
+| `components/SmoothScroll.tsx` | Lenis instance on `window.LD.lenis`. Scrolls to top on client-side navigation. An old `#hash` URL still lands on its section, then the hash is stripped. |
+| `lib/scroll.ts`, `components/ScrollTo.tsx` | `scrollToId()` and a `<ScrollTo to="visit">` button: smooth-scroll to a section **without changing the URL**. |
 | `components/Nav.tsx`, `Sky.tsx`, `Chrome.tsx` (Footer, Dock), `Brand.tsx` (logo SVG paths), `Icons.tsx` | Shared UI |
 | `public/img/og-home.jpg`, `og-menu.jpg` | Social share images (1200×630) for `/` and `/menu`, rendered by `scripts/og-images.js` (needs Playwright, which isn't a project dependency). The menu one shows five real dishes and prices. If those change, update the script and re-run it, and give the files new names, because `/img/*` is cached for a year. |
 | `public/img`, `public/video` | Interior stills + 12.8 s hero clip (540×960 H.264, ~700 KB), all cut from the restaurant's opening video. `public/luna-dine-menu.pdf` is the downloadable printed menu. |
@@ -42,7 +43,8 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 2. **Global state lives as classes on `<html>`:** `no-intro` (skip intro; sets `--intro:0s`), `menu-open` (mobile sheet), `nav-gone` (nav hidden on scroll-down). Set them only via `document.documentElement`.
 3. **Intro timing:** hero animations wait `var(--intro)` (1.45 s). An inline script in `layout.tsx` adds `no-intro` before paint for returning visitors (sessionStorage `ld-intro`), reduced-motion users, and any path other than `/`. `PageFX noIntro` adds it again after client-side navigation. `<html>` has `suppressHydrationWarning` for this reason, so don't remove it.
 4. **Scrolling:** Lenis drives native window scroll, so `window.scrollY` and `scroll` events stay accurate. To scroll in code, use `window.LD?.lenis?.scrollTo(...)` with a `window.scrollTo` fallback (Lenis is `null` under reduced motion). After content height changes, call `lenis.resize()`.
-5. **"The Room" pinning (desktop >860px only):** PageFX sets the section height to `100vh + trackOverflow` and translates the track on scroll. A ResizeObserver recalculates this. Below 860px it's a native horizontal swipe with scroll-snap.
+5. **No `#hash` links, anywhere.** In-page navigation uses `ScrollTo` buttons (`Nav` turns `href: "#id"` props into them) or `scrollToId()`, and the URL never changes.
+10. **"The Room"** is a pure-CSS auto-scrolling reel. The cards are rendered twice and the track animates to `-50%`. Each card carries its own right margin (not `gap`), so the two halves are exactly equal and the loop is seamless. It pauses on hover. Under reduced motion it stops and becomes swipeable.
 6. **Respect `prefers-reduced-motion`** everywhere. There's already a global CSS override, and JS effects check `matchMedia`.
 7. **Breakpoint** is 860px (nav → burger, hero video becomes full-bleed, dock appears).
 8. **`backdrop-filter`: write `-webkit-backdrop-filter` first, then `backdrop-filter`.** The build's CSS minifier keeps only the last of the pair. With the standard one first, Chrome, Edge and Android got no blur at all.

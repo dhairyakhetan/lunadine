@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wordmark, Tagline } from "./Brand";
 import { IPhone, IPin, IBook, IHome } from "./Icons";
 import { SITE } from "@/lib/site";
+import ScrollTo from "./ScrollTo";
 
 export function Footer({ home = true }: { home?: boolean }) {
   return (
@@ -12,7 +13,7 @@ export function Footer({ home = true }: { home?: boolean }) {
           <Tagline className="foot__tag" label="Beyond Fine Dining" />
           <nav>
             {home ? <Link href="/menu">Menu</Link> : <Link href="/">Home</Link>}
-            <Link href="/#visit">Visit</Link>
+            {home ? <ScrollTo to="visit">Visit</ScrollTo> : <Link href="/">Visit</Link>}
             <a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a>
             <a href={SITE.facebook} target="_blank" rel="noopener">Facebook</a>
           </nav>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Emblem, Wordmark } from "./Brand";
 import { SITE } from "@/lib/site";
+import ScrollTo from "./ScrollTo";
 
 type L = { href: string; label: string; current?: boolean };
 
@@ -41,8 +42,11 @@ export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: 
     return () => { removeEventListener("scroll", onScroll); root.classList.remove("nav-gone"); };
   }, []);
 
+  // "#id" hrefs are sections on this page: rendered as buttons that smooth-scroll, never as #links.
   const A = ({ l, className, onClick }: { l: L; className?: string; onClick?: () => void }) =>
-    l.href.startsWith("#") || l.href.startsWith("tel:") ? (
+    l.href.startsWith("#") ? (
+      <ScrollTo to={l.href.slice(1)} className={className} onClick={onClick}>{l.label}</ScrollTo>
+    ) : l.href.startsWith("tel:") ? (
       <a href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</a>
     ) : (
       <Link href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</Link>

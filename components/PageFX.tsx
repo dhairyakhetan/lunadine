@@ -1,10 +1,11 @@
 "use client";
 import { useEffect } from "react";
+import { scrollToId } from "@/lib/scroll";
 
 /**
  * Page-level scroll effects. Works on whatever markup the current page has:
  * [data-reveal]/.split reveals, pointer glow, video play-on-screen, lazy map, count-up,
- * story word highlight + moon phase, pinned horizontal "room" gallery, dock + back-to-top.
+ * story word highlight + moon phase, dock + back-to-top.
  */
 export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
   useEffect(() => {
@@ -12,35 +13,10 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     if (noIntro) root.classList.add("no-intro");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fine = matchMedia("(pointer: fine)").matches;
-    const isDesk = () => innerWidth > 860;
     const cleanups: (() => void)[] = [];
     const on = <K extends keyof WindowEventMap>(t: K, f: (e: WindowEventMap[K]) => void, o?: AddEventListenerOptions) => {
       addEventListener(t, f, o); cleanups.push(() => removeEventListener(t, f));
     };
-    const scrollToEl = (el: Element | number) => {
-      const lenis = window.LD?.lenis;
-      if (lenis) lenis.scrollTo(el as HTMLElement | number, { duration: 1.4 });
-      else typeof el === "number" ? scrollTo({ top: el, behavior: reduce ? "auto" : "smooth" }) : el.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-    };
-
-    /* in-page #anchors → smooth scroll */
-    const onClick = (e: MouseEvent) => {
-      if (e.defaultPrevented) return; // already handled by a component (e.g. menu chips)
-      const a = (e.target as Element).closest?.('a[href^="#"]') as HTMLAnchorElement | null;
-      if (!a) return;
-      const id = a.getAttribute("href")!;
-      if (id.length < 2) return;
-      const el = d.querySelector(id);
-      if (!el) return;
-      e.preventDefault();
-      root.classList.remove("menu-open");
-      window.LD?.lenis?.start();
-      scrollToEl(el);
-      history.replaceState(null, "", id);
-    };
-    d.addEventListener("click", onClick);
-    cleanups.push(() => d.removeEventListener("click", onClick));
-
     /* reveals */
     const io = new IntersectionObserver(es => es.forEach(en => {
       if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
@@ -92,25 +68,9 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     const words = story ? [...story.querySelectorAll<HTMLElement>(".w")] : [];
     const moon = d.querySelector<HTMLElement>(".moon");
 
-    /* room: vertical scroll → horizontal track */
-    const room = d.querySelector<HTMLElement>(".room");
-    const track = room?.querySelector<HTMLElement>(".room__track") ?? null;
-    const cards = room ? [...room.querySelectorAll<HTMLElement>(".card__img img")] : [];
-    let roomMax = 0;
-    const sizeRoom = () => {
-      if (!room || !track) return;
-      if (!isDesk()) { room.style.height = ""; track.style.transform = ""; return; }
-      roomMax = Math.max(0, track.scrollWidth - innerWidth);
-      room.style.height = innerHeight + roomMax + "px";
-      window.LD?.lenis?.resize();
-    };
-    if (track) { const ro = new ResizeObserver(sizeRoom); ro.observe(track); cleanups.push(() => ro.disconnect()); }
-    on("resize", sizeRoom, { passive: true });
-    sizeRoom();
-
     const dock = d.querySelector<HTMLElement>(".dock");
     const toTop = d.querySelector<HTMLElement>(".to-top");
-    const goTop = () => scrollToEl(0);
+    const goTop = () => scrollToId(null);
     toTop?.addEventListener("click", goTop);
     cleanups.push(() => toTop?.removeEventListener("click", goTop));
 
@@ -124,16 +84,6 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
         const n = Math.round(p * words.length);
         for (let i = 0; i < words.length; i++) words[i].classList.toggle("on", i < n);
         moon?.style.setProperty("--p", p.toFixed(3));
-      }
-      if (room && track && isDesk() && roomMax > 0) {
-        const r = room.getBoundingClientRect();
-        const p = clamp(-r.top / (r.height - innerHeight));
-        track.style.transform = `translate3d(${-p * roomMax}px,0,0)`;
-        room.style.setProperty("--rp", p.toFixed(4));
-        for (const img of cards) {
-          const b = img.parentElement!.getBoundingClientRect();
-          img.style.setProperty("--px", (((b.left + b.width / 2) / innerWidth - 0.5) * -40).toFixed(1) + "px");
-        }
       }
       dock?.classList.toggle("is-on", y > innerHeight * 0.6);
       toTop?.classList.toggle("on", y > innerHeight * 1.2);

@@ -141,10 +141,10 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     <>
       <nav className="mtools cats" ref={bar} aria-label="Menu sections">
         {MENU.map(s => (
-          <a key={s.id} href={`#${s.id}`} data-id={s.id} className={active === s.id ? "on" : undefined}
-            onClick={e => { e.preventDefault(); scrollUnderBar(document.getElementById(s.id)); }}>
+          <button type="button" key={s.id} data-id={s.id} className={active === s.id ? "on" : undefined} aria-current={active === s.id ? "true" : undefined}
+            onClick={() => scrollUnderBar(document.getElementById(s.id))}>
             {s.title}
-          </a>
+          </button>
         ))}
       </nav>
 

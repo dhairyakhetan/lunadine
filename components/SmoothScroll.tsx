@@ -23,7 +23,8 @@ export default function SmoothScroll() {
     return () => { cancelAnimationFrame(id); lenis.destroy(); window.LD = { lenis: null }; };
   }, []);
 
-  // On client-side navigation: jump to top, or to the #hash target.
+  // On client-side navigation: jump to top. An old #hash link still lands on its section, then the hash is
+  // removed from the address bar (the site itself never creates #links).
   useEffect(() => {
     const lenis = window.LD?.lenis;
     document.documentElement.classList.remove("menu-open");
@@ -32,6 +33,7 @@ export default function SmoothScroll() {
       const hash = location.hash;
       const el = hash.length > 1 ? document.querySelector(hash) : null;
       if (el) lenis ? lenis.scrollTo(el as HTMLElement, { immediate: true }) : el.scrollIntoView();
+      if (hash) history.replaceState(history.state, "", location.pathname + location.search);
       else lenis ? lenis.scrollTo(0, { immediate: true }) : window.scrollTo(0, 0);
       lenis?.start();
     }, 30);

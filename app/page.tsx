@@ -143,30 +143,33 @@ export default function Home() {
 
         {/* ROOM */}
         <section className="room" id="room">
-          <div className="room__pin">
-            <div className="wrap room__head">
-              <div>
-                <span className="kicker" data-reveal>The Room</span>
-                <h2 className="h-l split" style={{ marginTop: 20 }}>
-                  <span className="line"><span>Step inside</span></span>
-                  <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>glow.</em></span></span>
-                </h2>
-              </div>
-              <p data-reveal style={{ "--d": ".15s" } as React.CSSProperties}>
-                Arches lit from within, booths in coral and forest green, a lantern over every corner. Scroll to walk through.
-              </p>
+          <div className="wrap room__head">
+            <div>
+              <span className="kicker" data-reveal>The Room</span>
+              <h2 className="h-l split" style={{ marginTop: 20 }}>
+                <span className="line"><span>Step inside</span></span>
+                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>glow.</em></span></span>
+              </h2>
             </div>
+            <p data-reveal style={{ "--d": ".15s" } as React.CSSProperties}>
+              Arches lit from within, booths in coral and forest green, a lantern over every corner.
+            </p>
+          </div>
+          {/* auto-scrolling gallery: the cards are rendered twice and the track slides by half its width, looping seamlessly */}
+          <div className="room__reel">
             <div className="room__track">
-              {ROOM.map(c => (
-                <figure className="card" key={c.f}>
-                  <div className="card__img">
-                    <Image src={`/img/${c.f}.webp`} alt={`${c.t.replace("&", "and")} at Luna Dine`} width={720} height={1280} sizes="(max-width:860px) 72vw, 26vw" />
-                  </div>
-                  <figcaption><b>{c.t}</b><span>{c.s}</span></figcaption>
-                </figure>
-              ))}
+              {[...ROOM, ...ROOM].map((c, i) => {
+                const copy = i >= ROOM.length;
+                return (
+                  <figure className={i % ROOM.length % 2 ? "card card--low" : "card"} key={i} aria-hidden={copy || undefined}>
+                    <div className="card__img">
+                      <Image src={`/img/${c.f}.webp`} alt={copy ? "" : `${c.t.replace("&", "and")} at Luna Dine`} width={720} height={1280} sizes="(max-width:860px) 62vw, 22vw" />
+                    </div>
+                    <figcaption><b>{c.t}</b><span>{c.s}</span></figcaption>
+                  </figure>
+                );
+              })}
             </div>
-            <div className="wrap"><div className="room__bar"><i /></div></div>
           </div>
         </section>
 
