@@ -6,7 +6,7 @@ import Sky from "@/components/Sky";
 import PageFX from "@/components/PageFX";
 import { Footer, Dock } from "@/components/Chrome";
 import { Emblem, Ornament, EMBLEM_D, EMBLEM_VB } from "@/components/Brand";
-import { IArrow, IPhone, IMail, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
+import { IArrow, IPhone, IMail, IClock, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
 import { TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
 import { SITE } from "@/lib/site";
 
@@ -22,6 +22,13 @@ const ROOM = [
   { f: "pichwai-table", t: "Table for four", s: "Under the art" },
   { f: "arches-wide", t: "The long room", s: "Mustard & marble" },
   { f: "facade-dusk", t: "Beyond fine dining", s: "Opp. Ghasbagan Maidan" },
+];
+
+// "Step inside": the arches that open up as you scroll into The Room (phones show only the middle one)
+const PORTAL = [
+  { f: "moon-wall", a: "The moon wall and coral booths at Luna Dine" },
+  { f: "arches", a: "Hand-painted Pichwai arches, lit from within, at Luna Dine" },
+  { f: "moon-garden", a: "A garden booth under the moon at Luna Dine" },
 ];
 
 const DISHES: { c: string; t: "v" | "n" | "x"; n: string; p: string; pr: number }[] = [
@@ -147,17 +154,26 @@ export default function Home() {
 
         {/* ROOM */}
         <section className="room" id="room">
-          <div className="wrap room__head">
-            <div>
-              <span className="kicker" data-reveal>The Room</span>
-              <h2 className="h-l split" style={{ marginTop: 24 }}>
-                <span className="line"><span>Step inside</span></span>
-                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>glow</em></span></span>
-              </h2>
+          {/* pinned while you scroll: the small arch between the words opens into the room (PageFX drives it) */}
+          <div className="portal">
+            <div className="portal__stage">
+              <div className="portal__arches">
+                {PORTAL.map((a, i) => (
+                  <div className={i === 1 ? "portal__arch portal__arch--c" : "portal__arch"} key={a.f}>
+                    <Image src={`/img/${a.f}.webp`} alt={a.a} width={720} height={1280} sizes="(orientation: portrait) 100vw, 30vw" />
+                  </div>
+                ))}
+              </div>
+              <div className="portal__head">
+                <span className="kicker">The Room</span>
+                <h2 className="portal__h">
+                  <span className="portal__l">Step inside</span>
+                  <span className="portal__gap" aria-hidden="true" />
+                  <span className="portal__r">the <em>glow</em></span>
+                </h2>
+              </div>
+              <p className="portal__cap">Arches lit from within, booths in coral and forest green, a lantern over every corner.</p>
             </div>
-            <p data-reveal style={{ "--d": ".15s" } as React.CSSProperties}>
-              Arches lit from within, booths in coral and forest green, a lantern over every corner.
-            </p>
           </div>
           {/* auto-scrolling gallery: the cards are rendered twice and the track slides by half its width, looping seamlessly */}
           <div className="room__reel">
@@ -220,6 +236,7 @@ export default function Home() {
                 <a href={SITE.maps} target="_blank" rel="noopener"><small>Find us</small><b>{SITE.address}</b><IArrow /></a>
                 <a href={SITE.tel}><small>Reserve</small><b>{SITE.phone}</b><IPhone /></a>
                 <a href={`mailto:${SITE.email}`}><small>Write</small><b>{SITE.email}</b><IMail /></a>
+                <div><small>Hours</small><b>Opens in the afternoon</b><IClock /></div>
               </div>
               <div className="socials" data-reveal>
                 <a href={SITE.instagram} target="_blank" rel="noopener" aria-label="Instagram"><IInstagram /></a>

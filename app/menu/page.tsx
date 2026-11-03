@@ -31,11 +31,13 @@ export default function MenuPage() {
       <PageFX noIntro />
       <header className="qhead">
         <div className="wrap">
-          <Link className="qhead__brand" href="/" aria-label="Luna Dine home">
-            <Emblem className="emb" />
-            <Wordmark className="wm" label="Luna Dine" />
-          </Link>
-          <h1>Menu</h1>
+          <div className="qhead__arch">
+            <Link className="qhead__brand" href="/" aria-label="Luna Dine home">
+              <Emblem className="emb" />
+              <Wordmark className="wm" label="Luna Dine" />
+            </Link>
+            <h1>Menu</h1>
+          </div>
           <ul className="promise" aria-label="Our kitchen promise">
             <li><ISeal />No Ajinomoto</li>
             <li><ISeal />No trans fat</li>

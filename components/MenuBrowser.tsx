@@ -11,6 +11,8 @@ const Veg = ({ t, quiet }: { t: Diet; quiet?: boolean }) => {
   return <i className={t === "v" ? "vg" : "vg n"} {...(quiet ? { "aria-hidden": true } : { role: "img", "aria-label": label, title: label })} />;
 };
 const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
+/** Moon phase for section i of n: the menu waxes from a thin crescent at the first section to a full moon at the last. */
+const phase = (i: number, n: number) => ({ "--p": (n > 1 ? 0.12 + 0.88 * i / (n - 1) : 1).toFixed(3) }) as React.CSSProperties;
 
 /* Review mode: the "Menu issues" button and inline flags. Off on the production domain unless the
    URL has ?review, so customers never see it; on localhost and preview deploys it's always on. */
@@ -247,10 +249,10 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
 
   /* The ~300 dish rows only change with the filter or review flags, so scrollspy updates and opening the
      section sheet (which re-render this component) don't re-render the whole menu. */
-  const list = useMemo(() => secs.map(sec => (
+  const list = useMemo(() => secs.map((sec, i) => (
     <section key={sec.id} id={sec.id} className="msec" {...DIET_COUNTS.get(sec.id)}>
       <header className="msec__head">
-        <small>{sec.kicker}</small>
+        <small><i className="mphase" style={phase(i, secs.length)} aria-hidden="true" />{sec.kicker}</small>
         <h2>{sec.title}</h2>
         {review && SECTION_FLAGS.has(sec.id) && (
           <p className={pulse === SECTION_FLAGS.get(sec.id) ? "msec__flag pulse" : "msec__flag"}>
@@ -317,7 +319,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
 
       {/* phone: floating section picker + bottom sheet */}
       <button type="button" ref={pillBtn} className={sheet ? "secpill hide" : "secpill"} aria-haspopup="dialog" aria-expanded={sheet} aria-controls="msheet" onClick={() => setSheet(true)}>
-        <span className="secpill__ic" aria-hidden="true"><i /><i /><i /><i /></span>
+        <span className="secpill__moon" style={phase(cur, secs.length)} aria-hidden="true" />
         <span className="secpill__lbl"><small>{mode === "v" ? "Veg · sections" : mode === "n" ? "Non-veg · sections" : "Sections"}</small>{secs[cur]?.title}</span>
         <span className="secpill__n">{cur + 1}/{secs.length}</span>
       </button>

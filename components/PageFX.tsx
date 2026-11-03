@@ -4,7 +4,7 @@ import { useEffect } from "react";
 /**
  * Page-level scroll effects. Works on whatever markup the current page has:
  * [data-reveal]/.split reveals, video play-on-screen, lazy map, count-up,
- * story word highlight + moon phase, mobile dock.
+ * story word highlight + moon phase, The Room "step inside" arches, mobile dock.
  */
 export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
   useEffect(() => {
@@ -12,6 +12,7 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     if (noIntro) root.classList.add("no-intro");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cleanups: (() => void)[] = [];
+    const clamp = (v: number) => Math.min(1, Math.max(0, v));
     const on = <K extends keyof WindowEventMap>(t: K, f: (e: WindowEventMap[K]) => void, o?: AddEventListenerOptions) => {
       addEventListener(t, f, o); cleanups.push(() => removeEventListener(t, f));
     };
@@ -61,7 +62,68 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
 
     const dock = d.querySelector<HTMLElement>(".dock");
 
-    const clamp = (v: number) => Math.min(1, Math.max(0, v));
+    /* The Room, "step inside": while the stage is pinned, each arch goes from the small frame between the words
+       (.portal__gap) to its own place in .portal__arches. Transform and opacity only; sizes are measured on resize
+       from layout (offsets ignore transforms), so scrolling never reads layout. */
+    const portal = d.querySelector<HTMLElement>(".portal");
+    const stage = portal?.querySelector<HTMLElement>(".portal__stage");
+    const gap = portal?.querySelector<HTMLElement>(".portal__gap");
+    const arches = portal ? [...portal.querySelectorAll<HTMLElement>(".portal__arch")] : [];
+    const pimgs = arches.map(a => a.querySelector("img"));
+    const halves = portal ? [...portal.querySelectorAll<HTMLElement>(".portal__l, .portal__r")] : [];
+    const phead = portal?.querySelector<HTMLElement>(".portal__head");
+    const pcap = portal?.querySelector<HTMLElement>(".portal__cap");
+    type Box = { x: number; y: number; w: number; h: number };
+    let G: Box = { x: 0, y: 0, w: 1, h: 1 }, F: Box[] = [], run = 1, lastE = -1;
+    const box = (el: HTMLElement): Box => {
+      let x = 0, y = 0;
+      for (let e: HTMLElement | null = el; e && e !== stage; e = e.offsetParent as HTMLElement | null) { x += e.offsetLeft; y += e.offsetTop; }
+      return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+    };
+    const measure = () => {
+      if (!portal || !stage || !gap) return;
+      F = arches.map(box);
+      const c = F[1] ?? F[0];
+      if (c?.w) gap.style.height = (gap.offsetWidth * c.h / c.w).toFixed(1) + "px"; // same shape as the arch it stands in for
+      G = box(gap);
+      run = Math.max(1, portal.offsetHeight - stage.offsetHeight);
+      lastE = -1;
+    };
+    const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const place = (p: number) => {
+      if (!portal) return;
+      const e = reduce ? 0 : ease(clamp(p / 0.75));
+      const k = reduce ? 1 : clamp((p - 0.78) / 0.14);
+      if (pcap) { pcap.style.opacity = k.toFixed(3); pcap.style.transform = `translateY(${((1 - k) * 16).toFixed(1)}px)`; }
+      if (e === lastE) return;
+      lastE = e;
+      arches.forEach((a, i) => {
+        const f = F[i];
+        if (!f?.w) return;
+        const s = G.w / f.w + (1 - G.w / f.w) * e;
+        const x = (G.x - f.x) * (1 - e), y = (G.y - f.y) * (1 - e);
+        a.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) scale(${s.toFixed(4)})`;
+        if (i !== 1) a.style.opacity = clamp((e - 0.08) / 0.3).toFixed(3);
+        const im = pimgs[i];
+        if (im) im.style.transform = `scale(${(1.25 - 0.25 * e).toFixed(4)})`;
+      });
+      if (phead) phead.style.opacity = (1 - clamp(e / 0.45)).toFixed(3);
+      halves.forEach((h, i) => { h.style.transform = `translateX(${((i ? 1 : -1) * e * 24).toFixed(2)}vw)`; });
+      portal.classList.add("on");
+    };
+    const portalFrame = () => {
+      if (!portal) return;
+      const r = portal.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < innerHeight) place(clamp(-r.top / run));
+    };
+    if (portal) {
+      measure();
+      place(clamp(-portal.getBoundingClientRect().top / run));
+      const onResize = () => { measure(); portalFrame(); };
+      on("resize", onResize, { passive: true });
+      d.fonts?.ready.then(() => { measure(); portalFrame(); }); // the headline's width moves the frame between the words
+    }
+
     let ticking = false;
     const frame = () => {
       const y = scrollY;
@@ -72,6 +134,7 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
         for (let i = 0; i < words.length; i++) words[i].classList.toggle("on", i < n);
         moon?.style.setProperty("--p", p.toFixed(3));
       }
+      portalFrame();
       dock?.classList.toggle("is-on", y > innerHeight * 0.6);
       ticking = false;
     };
