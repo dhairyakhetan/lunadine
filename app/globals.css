@@ -407,14 +407,14 @@ em,.it{font-style:italic;color:var(--gold)}
   .qhead h1{font-size:40px;margin-top:14px}
   .promise{margin-top:18px}
   .mtools.cats{display:none}
-  .mbody{padding:6px 0 110px}
-  .mbody>.wrap{padding-inline:10px}
+  .mbody{padding:0 0 110px;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply;color:var(--ink)}
+  .mbody>.wrap{width:100%}
   .msec{margin:0;padding:0 16px 26px;border-radius:0;scroll-margin-top:0}
-  .msec:first-child{border-radius:22px 22px 0 0}
-  .msec:last-of-type{border-radius:0 0 22px 22px;padding-bottom:30px}
+  .msec{background:none}
+  .msec:last-of-type{padding-bottom:30px}
   .msec+.msec{box-shadow:inset 0 1px 0 rgba(27,37,64,.14)}
   .msec__head{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;align-items:flex-start;text-align:left;margin:0 -16px 6px;padding:16px 16px 12px;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply;border-bottom:1px solid rgba(27,37,64,.12);box-shadow:0 10px 16px -14px rgba(27,37,64,.5)}
-  .msec:first-child .msec__head{border-radius:22px 22px 0 0;padding-top:20px}
+  .msec:first-child .msec__head{padding-top:20px}
   .msec__head small{font-size:11px;letter-spacing:.24em}
   .msec__head h2{font-size:31px;margin-top:5px}
   .msec__flag{margin-top:10px}
@@ -427,7 +427,8 @@ em,.it{font-style:italic;color:var(--gold)}
   .items li .nt{grid-area:nt;white-space:normal}
   .items li .dt{display:none}
   .items li .pr{grid-area:pr;font-size:22px;padding-left:6px}
-  .mnote{margin-top:22px;padding-inline:10px}
+  .mnote{margin:0 16px;padding-top:22px;border-top:1px solid rgba(27,37,64,.14);color:rgba(27,37,64,.62)}
+  .mnote .vg{background:none}
   .issues{bottom:max(84px,calc(env(safe-area-inset-bottom) + 70px))}
 }
 
