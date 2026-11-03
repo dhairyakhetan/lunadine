@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MENU, type Diet } from "@/lib/menu";
 import { MENU_ISSUES } from "@/lib/menu-issues";
-import { IAlert, IClose } from "./Icons";
+import { IAlert, IClose, IUp } from "./Icons";
 
 const Veg = ({ t }: { t: Diet }) => (t === "v" ? <i className="vg" title="Veg" /> : t === "n" ? <i className="vg n" title="Non-veg" /> : null);
 const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
@@ -18,6 +18,13 @@ const FLAGS = new Map<string, number[]>();
 MENU_ISSUES.forEach((iss, i) => iss.items?.forEach(n => FLAGS.set(n, [...(FLAGS.get(n) ?? []), i])));
 const SECTION_FLAGS = new Map(MENU_ISSUES.flatMap((iss, i) => (iss.section ? [[iss.section, i] as const] : [])));
 
+/* per-section summary for the phone section sheet */
+const SECS = MENU.map(s => ({
+  id: s.id, title: s.title,
+  count: s.groups.reduce((n, g) => n + g.items.length, 0),
+  veg: s.groups.some(g => g.t === "v"), non: s.groups.some(g => g.t === "n"),
+}));
+
 /** Page Y of an element from layout (offsetTop chain), unaffected by transforms. */
 const docTop = (el: HTMLElement) => {
   let y = 0;
@@ -31,18 +38,28 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const [review, setReview] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [pulse, setPulse] = useState(-1);
+  const [sheet, setSheet] = useState(false);
 
   const bar = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const issuesBox = useRef<HTMLDivElement>(null);
+  const sheetBox = useRef<HTMLDivElement>(null);
+  const pillBtn = useRef<HTMLButtonElement>(null);
 
   const barH = () => bar.current?.getBoundingClientRect().height ?? 56;
   const scrollToY = (y: number) => {
     const lenis = window.LD?.lenis;
     lenis ? lenis.scrollTo(y, { duration: 1.1 }) : window.scrollTo({ top: y, behavior: "smooth" });
   };
-  /** Scroll so `el` starts just under the sticky section bar. */
-  const scrollUnderBar = (el: HTMLElement | null, gap = 12) => { if (el) scrollToY(Math.max(0, docTop(el) - barH() - gap)); };
+  /** Scroll so `el` starts just under the sticky chips bar (desktop). On phones there's no bar, but each
+   *  section's title is sticky, so a target inside a section is placed under that title instead. */
+  const scrollUnderBar = (el: HTMLElement | null, gap = 12) => {
+    if (!el) return;
+    const bh = barH();
+    let off = bh ? bh + gap : 0;
+    if (!bh && !el.classList.contains("msec")) off += (el.closest(".msec")?.querySelector<HTMLElement>(".msec__head")?.offsetHeight ?? 0) + gap;
+    scrollToY(Math.max(0, docTop(el) - off));
+  };
 
   /* scrollspy: the section crossing the line under the bar is active */
   useEffect(() => {
@@ -69,6 +86,30 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     if (c && a) c.scrollTo({ left: a.offsetLeft - c.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" });
   }, [active]);
 
+  /* phone section sheet: lock the page behind it, close on Escape, move focus in and back out */
+  useEffect(() => {
+    if (!sheet) return;
+    const root = document.documentElement, lenis = window.LD?.lenis;
+    root.style.overflow = "hidden";
+    lenis?.stop();
+    const g = sheetBox.current;
+    (g?.querySelector<HTMLElement>(".msheet__grid .on") ?? g?.querySelector<HTMLElement>(".msheet__grid button"))?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSheet(false); };
+    addEventListener("keydown", onKey);
+    return () => {
+      removeEventListener("keydown", onKey);
+      root.style.overflow = "";
+      lenis?.start();
+      pillBtn.current?.focus({ preventScroll: true });
+    };
+  }, [sheet]);
+  const jump = (id: string | null) => {
+    setSheet(false);
+    // after the sheet's cleanup has unlocked scrolling
+    requestAnimationFrame(() => id ? scrollUnderBar(document.getElementById(id)) : scrollToY(0));
+  };
+  const cur = SECS.findIndex(s => s.id === active);
+
   /* review mode */
   useEffect(() => { setReview(isReview(prodHost)); }, [prodHost]);
   useEffect(() => {
@@ -91,9 +132,9 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     setPulse(i);
     const first = iss.items?.[0];
     const target = first
-      ? document.querySelector<HTMLElement>(`li[data-n="${CSS.escape(first)}"]`)?.closest<HTMLElement>(".mgrp") ?? null
+      ? document.querySelector<HTMLElement>(`li[data-n="${CSS.escape(first)}"]`)
       : iss.section ? document.getElementById(iss.section) : null;
-    scrollUnderBar(target);
+    scrollUnderBar(target, 60); // a little context above the flagged dish
   };
 
   return (
@@ -150,6 +191,30 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
             <span>w/b — with bone · b/l — boneless</span>
             <span>Soft drinks at MRP</span>
           </div>
+        </div>
+      </div>
+
+      {/* phone: floating section picker + bottom sheet */}
+      <button type="button" ref={pillBtn} className={sheet ? "secpill hide" : "secpill"} aria-haspopup="dialog" aria-expanded={sheet} aria-controls="msheet" onClick={() => setSheet(true)}>
+        <span className="secpill__ic" aria-hidden="true"><i /><i /><i /><i /></span>
+        <span className="secpill__lbl"><small>Sections</small>{SECS[cur]?.title}</span>
+        <span className="secpill__n">{cur + 1}/{SECS.length}</span>
+      </button>
+      <div className={sheet ? "msheet-bg on" : "msheet-bg"} onClick={() => setSheet(false)} aria-hidden="true" />
+      <div className={sheet ? "msheet on" : "msheet"} id="msheet" role="dialog" aria-modal="true" aria-label="Menu sections" ref={sheetBox} inert={!sheet} data-lenis-prevent>
+        <div className="msheet__head">
+          <span className="msheet__grip" aria-hidden="true" />
+          <div className="msheet__title"><small>Luna Dine</small>Jump to a section</div>
+          <button type="button" className="msheet__top" onClick={() => jump(null)}><IUp />Top</button>
+          <button type="button" className="msheet__x" aria-label="Close" onClick={() => setSheet(false)}><IClose /></button>
+        </div>
+        <div className="msheet__grid">
+          {SECS.map(s => (
+            <button type="button" key={s.id} className={s.id === active ? "on" : undefined} aria-current={s.id === active ? "true" : undefined} onClick={() => jump(s.id)}>
+              <b>{s.title}</b>
+              <span>{s.veg && <i className="vg" />}{s.non && <i className="vg n" />}{s.count} {s.count === 1 ? "dish" : "dishes"}</span>
+            </button>
+          ))}
         </div>
       </div>
 
