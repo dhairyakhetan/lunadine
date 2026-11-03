@@ -483,6 +483,25 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     return () => { clearTimeout(t); c.removeEventListener("scroll", onScroll); };
   }, []);
 
+  /* phone section sheet, as it opens (before paint): the grid starts scrolled so the current section's tile is in
+     the middle, and the tiles in view rise in with a short stagger while the sheet slides up */
+  useLayoutEffect(() => {
+    if (!sheet) return;
+    const grid = sheetBox.current?.querySelector<HTMLElement>(".msheet__grid");
+    if (!grid) return;
+    const on = grid.querySelector<HTMLElement>("button.on");
+    if (on) grid.scrollTop = Math.max(0, on.offsetTop + on.offsetHeight / 2 - grid.clientHeight / 2); // .msheet__grid is position:relative
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let i = 0;
+    grid.querySelectorAll<HTMLElement>(":scope > button").forEach(t => {
+      if (!shown(t)) return;
+      const top = t.offsetTop - grid.scrollTop;
+      if (top + t.offsetHeight < 0 || top > grid.clientHeight) return;
+      t.animate([{ opacity: 0, transform: "translateY(18px) scale(.96)" }, { opacity: 1, transform: "none" }],
+        { duration: 460, delay: 90 + Math.min(i++ * 30, 300), easing: EASE, fill: "backwards" });
+    });
+  }, [sheet]);
+
   /* phone section sheet: lock the page behind it, close on Escape, move focus in and back out */
   useEffect(() => {
     if (!sheet) return;
@@ -545,6 +564,63 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     requestAnimationFrame(() => id ? scrollUnderBar(document.getElementById(id)) : scrollToY(0));
   };
   const cur = Math.max(0, secs.findIndex(s => s.id === active));
+
+  /* phone: the Sections pill's name ticks over (the old one slides up and out as the new one rises in), its count
+     follows, and the pill eases to its new width instead of jumping. The width is kept as an explicit px value so
+     the old one is known; it's measured again when the font arrives and on resize. Inline styles only. */
+  const pillSmall = mode === "v" ? "Veg · sections" : mode === "n" ? "Non-veg · sections" : "Sections";
+  const pillTitle = secs[cur]?.title ?? "", pillN = `${cur + 1}/${secs.length}`;
+  const pillPrev = useRef<{ s: string; t: string; n: string } | null>(null);
+  const pillGhost = useRef<HTMLElement | null>(null);
+  const fitPill = (animate: boolean) => {
+    const p = pillBtn.current;
+    if (!p || !p.offsetWidth) return; // not on phones
+    const w0 = p.getBoundingClientRect().width;
+    p.style.transition = "none";
+    p.style.width = "";
+    const w1 = p.getBoundingClientRect().width;
+    p.style.width = (animate ? w0 : w1) + "px";
+    void p.offsetWidth;
+    p.style.transition = "";
+    if (animate && Math.abs(w1 - w0) > 0.5) p.style.width = w1 + "px"; // CSS eases it (globals.css)
+  };
+  useLayoutEffect(() => {
+    const prev = pillPrev.current, p = pillBtn.current;
+    pillPrev.current = { s: pillSmall, t: pillTitle, n: pillN };
+    if (!p || !p.offsetWidth) return;
+    if (!prev) { fitPill(false); return; }
+    const counted = prev.n !== pillN;
+    if (prev.s === pillSmall && prev.t === pillTitle && !counted) return;
+    fitPill(true);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // the name ticks over inside its own clipped slot (.secpill__t): the old one slides up and out, the new one
+    // rises in from below. The little label above only changes with the filter, and then it just cross-fades.
+    if (prev.t !== pillTitle) {
+      const slot = p.querySelector<HTMLElement>(".secpill__t"), now = slot?.firstElementChild as HTMLElement | null;
+      if (slot && now) {
+        pillGhost.current?.remove();
+        const ghost = document.createElement("span");
+        ghost.className = "secpill__ghost";
+        ghost.textContent = prev.t;
+        slot.appendChild(ghost); // React keeps the slot's own child (the span with the name), so this is left alone
+        pillGhost.current = ghost;
+        ghost.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(-100%)", opacity: 0 }],
+          { duration: 300, easing: "cubic-bezier(.4,0,.6,1)", fill: "forwards" });
+        setTimeout(() => { ghost.remove(); if (pillGhost.current === ghost) pillGhost.current = null; }, 340);
+        now.animate([{ transform: "translateY(100%)", opacity: 0 }, { transform: "none", opacity: 1 }],
+          { duration: 420, delay: 40, easing: EASE, fill: "backwards" });
+      }
+    }
+    if (prev.s !== pillSmall) p.querySelector(".secpill__lbl > small")?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: EASE });
+    if (counted) p.querySelector(".secpill__n")?.animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: 320, delay: 60, easing: EASE, fill: "backwards" });
+  }, [pillSmall, pillTitle, pillN]);
+  useEffect(() => {
+    const refit = () => fitPill(false);
+    document.fonts?.ready.then(refit);
+    addEventListener("resize", refit, { passive: true });
+    return () => { removeEventListener("resize", refit); pillGhost.current?.remove(); };
+  }, []);
 
   /* restore the saved filter before paint (the html.diet-* class from layout.tsx already shows that menu) */
   const restoring = useRef(false);
@@ -686,8 +762,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       {/* phone: floating section picker + bottom sheet */}
       <button type="button" ref={pillBtn} className={sheet ? "secpill hide" : "secpill"} aria-haspopup="dialog" aria-expanded={sheet} aria-controls="msheet" onClick={() => setSheet(true)}>
         <span className="secpill__moon" style={phase(cur, secs.length)} aria-hidden="true" />
-        <span className="secpill__lbl"><small>{mode === "v" ? "Veg · sections" : mode === "n" ? "Non-veg · sections" : "Sections"}</small>{secs[cur]?.title}</span>
-        <span className="secpill__n">{cur + 1}/{secs.length}</span>
+        <span className="secpill__lbl"><small>{pillSmall}</small><span className="secpill__t"><span>{pillTitle}</span></span></span>
+        <span className="secpill__n">{pillN}</span>
       </button>
       <div ref={sheetBg} className={sheet ? "msheet-bg on" : "msheet-bg"} onClick={() => setSheet(false)} aria-hidden="true" />
       <div className={sheet ? "msheet on" : "msheet"} id="msheet" role="dialog" aria-modal="true" aria-label="Menu sections" ref={sheetBox} inert={!sheet} data-lenis-prevent>
