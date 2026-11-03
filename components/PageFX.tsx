@@ -1,11 +1,10 @@
 "use client";
 import { useEffect } from "react";
-import { scrollToId } from "@/lib/scroll";
 
 /**
  * Page-level scroll effects. Works on whatever markup the current page has:
  * [data-reveal]/.split reveals, pointer glow, video play-on-screen, lazy map, count-up,
- * story word highlight + moon phase, dock + back-to-top.
+ * story word highlight + moon phase, mobile dock.
  */
 export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
   useEffect(() => {
@@ -52,12 +51,18 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
 
     /* count up */
     d.querySelectorAll<HTMLElement>("[data-count]").forEach(el => {
+      if (reduce) return;
       const end = +el.dataset.count!;
+      el.textContent = "0"; // the stats fade in before they count, so don't flash the final number first
       const o = new IntersectionObserver(([en]) => {
         if (!en.isIntersecting) return; o.disconnect();
-        if (reduce) return;
-        const t0 = performance.now();
-        const step = (t: number) => { const k = Math.min(1, (t - t0) / 1600); el.textContent = String(Math.round(end * (1 - Math.pow(1 - k, 4)))); if (k < 1) requestAnimationFrame(step); };
+        let t0 = 0;
+        const step = (t: number) => {
+          t0 ||= t; // rAF time, not performance.now(): that can be later than the first frame's time and go negative
+          const k = Math.min(1, (t - t0) / 1600);
+          el.textContent = String(Math.round(end * (1 - Math.pow(1 - k, 4))));
+          if (k < 1) requestAnimationFrame(step);
+        };
         requestAnimationFrame(step);
       }, { threshold: 0.6 });
       o.observe(el); cleanups.push(() => o.disconnect());
@@ -69,24 +74,19 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     const moon = d.querySelector<HTMLElement>(".moon");
 
     const dock = d.querySelector<HTMLElement>(".dock");
-    const toTop = d.querySelector<HTMLElement>(".to-top");
-    const goTop = () => scrollToId(null);
-    toTop?.addEventListener("click", goTop);
-    cleanups.push(() => toTop?.removeEventListener("click", goTop));
 
     const clamp = (v: number) => Math.min(1, Math.max(0, v));
     let ticking = false;
     const frame = () => {
       const y = scrollY;
-      if (story) {
-        const r = story.getBoundingClientRect();
+      const r = story?.getBoundingClientRect();
+      if (story && r && r.bottom > 0 && r.top < innerHeight) { // only while the story is on screen
         const p = clamp((innerHeight * 0.75 - r.top) / (r.height * 0.62));
         const n = Math.round(p * words.length);
         for (let i = 0; i < words.length; i++) words[i].classList.toggle("on", i < n);
         moon?.style.setProperty("--p", p.toFixed(3));
       }
       dock?.classList.toggle("is-on", y > innerHeight * 0.6);
-      toTop?.classList.toggle("on", y > innerHeight * 1.2);
       ticking = false;
     };
     const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };

@@ -4,7 +4,12 @@ import { MENU, type Diet } from "@/lib/menu";
 import { MENU_ISSUES } from "@/lib/menu-issues";
 import { IAlert, IClose, IUp } from "./Icons";
 
-const Veg = ({ t }: { t: Diet }) => (t === "v" ? <i className="vg" title="Veg" /> : t === "n" ? <i className="vg n" title="Non-veg" /> : null);
+/** Veg / non-veg mark. Labelled for screen readers, except next to a heading that already says it (`quiet`). */
+const Veg = ({ t, quiet }: { t: Diet; quiet?: boolean }) => {
+  if (t === "x") return null;
+  const label = t === "v" ? "Veg" : "Non-veg";
+  return <i className={t === "v" ? "vg" : "vg n"} {...(quiet ? { "aria-hidden": true } : { role: "img", "aria-label": label, title: label })} />;
+};
 const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
 
 /* Review mode: the "Menu issues" button and inline flags. Off on the production domain unless the
@@ -52,6 +57,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const body = useRef<HTMLDivElement>(null);
   const issuesBox = useRef<HTMLDivElement>(null);
   const sheetBox = useRef<HTMLDivElement>(null);
+  const sheetBg = useRef<HTMLDivElement>(null);
   const pillBtn = useRef<HTMLButtonElement>(null);
 
   const barH = () => bar.current?.getBoundingClientRect().height ?? 56;
@@ -111,6 +117,45 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       pillBtn.current?.focus({ preventScroll: true });
     };
   }, [sheet]);
+  /* phone section sheet: drag its header down to close it. Inline styles only (React owns the classes). */
+  useEffect(() => {
+    const box = sheetBox.current, bg = sheetBg.current, head = box?.querySelector<HTMLElement>(".msheet__head");
+    if (!box || !bg || !head) return;
+    let id = -1, y0 = 0, dy = 0, t = 0, v = 0; // v: downward speed in px/ms, from the last moves
+    const set = (tf: string, op: string, tr: string) => {
+      box.style.transform = tf; box.style.transition = tr;
+      bg.style.opacity = op; bg.style.transition = tr;
+    };
+    const down = (e: PointerEvent) => {
+      if (!e.isPrimary || (e.target as Element).closest("button")) return;
+      id = e.pointerId; y0 = e.clientY; dy = 0; t = e.timeStamp; v = 0;
+      head.setPointerCapture(id);
+    };
+    const move = (e: PointerEvent) => {
+      if (e.pointerId !== id) return;
+      const d = Math.max(0, e.clientY - y0);
+      v = 0.7 * ((d - dy) / Math.max(1, e.timeStamp - t)) + 0.3 * v;
+      dy = d; t = e.timeStamp;
+      set(`translateY(${dy}px)`, String(1 - Math.min(1, dy / box.offsetHeight)), "none");
+    };
+    const up = (e: PointerEvent) => {
+      if (e.pointerId !== id) return;
+      id = -1;
+      set("", "", ""); // back to the stylesheet: it slides home, or out if we close it below
+      const fast = dy > 24 && v > 0.4 && e.timeStamp - t < 120; // a flick (still moving when let go)
+      if (dy > Math.min(120, box.offsetHeight * 0.25) || fast) setSheet(false);
+    };
+    head.addEventListener("pointerdown", down);
+    head.addEventListener("pointermove", move);
+    head.addEventListener("pointerup", up);
+    head.addEventListener("pointercancel", up);
+    return () => {
+      head.removeEventListener("pointerdown", down);
+      head.removeEventListener("pointermove", move);
+      head.removeEventListener("pointerup", up);
+      head.removeEventListener("pointercancel", up);
+    };
+  }, []);
   const jump = (id: string | null) => {
     setSheet(false);
     // after the sheet's cleanup has unlocked scrolling
@@ -162,6 +207,43 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     }));
   };
 
+  /* The ~300 dish rows only change with the filter or review flags, so scrollspy updates and opening the
+     section sheet (which re-render this component) don't re-render the whole menu. */
+  const list = useMemo(() => secs.map(sec => (
+    <section key={sec.id} id={sec.id} className="msec">
+      <header className="msec__head">
+        <small>{sec.kicker}</small>
+        <h2>{sec.title}</h2>
+        {review && SECTION_FLAGS.has(sec.id) && (
+          <p className={pulse === SECTION_FLAGS.get(sec.id) ? "msec__flag pulse" : "msec__flag"}>
+            <i className="flag__q">?</i>{MENU_ISSUES[SECTION_FLAGS.get(sec.id)!].detail}
+          </p>
+        )}
+      </header>
+      {sec.groups.map(g => (
+        <div className="mgrp" key={g.label}>
+          {sec.groups.length > 1 && <h3><Veg t={g.t} quiet />{g.label}</h3>}
+          <ul className="items">
+            {g.items.map(([n, p, note]) => {
+              const flags = review ? FLAGS.get(n) : undefined;
+              const why = flags?.map(i => MENU_ISSUES[i].detail).join(" ");
+              const cls = flags ? (flags.includes(pulse) ? "flag pulse" : "flag") : undefined;
+              return (
+                <li key={n} className={cls} title={why} data-n={flags ? n : undefined}>
+                  <Veg t={g.t} />
+                  <span className="nm">{n}{flags && <i className="flag__q" aria-label={`Needs confirming: ${why}`}>?</i>}</span>
+                  {note && <span className="nt">{note}</span>}
+                  <span className="dt" />
+                  <span className="pr">{price(p)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  )), [secs, review, pulse]);
+
   return (
     <>
       <div className="mtools" ref={bar}>
@@ -184,40 +266,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
 
       <div className="mbody">
         <div className="wrap" ref={body}>
-          {secs.map(sec => (
-            <section key={sec.id} id={sec.id} className="msec">
-              <header className="msec__head">
-                <small>{sec.kicker}</small>
-                <h2>{sec.title}</h2>
-                {review && SECTION_FLAGS.has(sec.id) && (
-                  <p className={pulse === SECTION_FLAGS.get(sec.id) ? "msec__flag pulse" : "msec__flag"}>
-                    <i className="flag__q">?</i>{MENU_ISSUES[SECTION_FLAGS.get(sec.id)!].detail}
-                  </p>
-                )}
-              </header>
-              {sec.groups.map(g => (
-                <div className="mgrp" key={g.label}>
-                  {sec.groups.length > 1 && <h3><Veg t={g.t} />{g.label}</h3>}
-                  <ul className="items">
-                    {g.items.map(([n, p, note]) => {
-                      const flags = review ? FLAGS.get(n) : undefined;
-                      const why = flags?.map(i => MENU_ISSUES[i].detail).join(" ");
-                      const cls = flags ? (flags.includes(pulse) ? "flag pulse" : "flag") : undefined;
-                      return (
-                        <li key={n} className={cls} title={why} data-n={flags ? n : undefined}>
-                          <Veg t={g.t} />
-                          <span className="nm">{n}{flags && <i className="flag__q" aria-label={`Needs confirming: ${why}`}>?</i>}</span>
-                          {note && <span className="nt">{note}</span>}
-                          <span className="dt" />
-                          <span className="pr">{price(p)}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </section>
-          ))}
+          {list}
           <div className="mnote">
             <span><i className="vg" /> Veg</span>
             <span><i className="vg n" /> Non-veg</span>
@@ -234,7 +283,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         <span className="secpill__lbl"><small>{mode === "v" ? "Veg · sections" : mode === "n" ? "Non-veg · sections" : "Sections"}</small>{secs[cur]?.title}</span>
         <span className="secpill__n">{cur + 1}/{secs.length}</span>
       </button>
-      <div className={sheet ? "msheet-bg on" : "msheet-bg"} onClick={() => setSheet(false)} aria-hidden="true" />
+      <div ref={sheetBg} className={sheet ? "msheet-bg on" : "msheet-bg"} onClick={() => setSheet(false)} aria-hidden="true" />
       <div className={sheet ? "msheet on" : "msheet"} id="msheet" role="dialog" aria-modal="true" aria-label="Menu sections" ref={sheetBox} inert={!sheet} data-lenis-prevent>
         <div className="msheet__head">
           <span className="msheet__grip" aria-hidden="true" />

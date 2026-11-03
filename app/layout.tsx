@@ -50,11 +50,15 @@ export const viewport: Viewport = {
 // Skip the intro animation for returning visitors, reduced-motion users, and any page other than home.
 const introScript = `try{if(location.pathname!=='/'||sessionStorage.getItem('ld-intro')||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('no-intro')}catch(e){}`;
 
+const noScriptCss = "[data-reveal],.split .line>span{opacity:1!important;transform:none!important}.story__text .w{opacity:1}";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: introScript }} />
+        {/* Without JS the scroll reveals never run, so show that content instead of leaving it invisible. */}
+        <noscript dangerouslySetInnerHTML={{ __html: `<style>${noScriptCss}</style>` }} />
       </head>
       <body>
         <SmoothScroll />

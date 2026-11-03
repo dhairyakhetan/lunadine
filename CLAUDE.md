@@ -4,7 +4,7 @@ Marketing site for **Luna Dine** ("Beyond Fine Dining"), a new exotic multicuisi
 
 `/menu` is what the **table QR codes** open, so it is deliberately **only the menu**: logo, kitchen promise, an **All / Veg / Non-veg** filter in the sticky bar, and the sections. The filter hides groups of the other diet. Drinks (`t: "x"`) show in every mode. Changing the filter returns you to the start of the menu. No site nav, search, filters, footer or dock. Keep it that way.
 - **Desktop/tablet (>700px):** a sticky row of section chips above the sections, which sit on separate paper cards.
-- **Phones (≤700px):** a separate layout. The sticky bar holds only the filter and is a fixed 56px tall; the sticky section titles sit at `top:55px`, so change both together. It's one continuous edge-to-edge menu card, and each section title is sticky while you're in that section. Dish rows are two lines (name and price, then details like "8 pc" underneath). The chips row is hidden. A floating **Sections** pill at the bottom shows the current section and opens a bottom sheet listing every section with its dish count.
+- **Phones (≤700px):** a separate layout. The sticky bar holds only the filter and is a fixed 56px tall; the sticky section titles sit at `top:55px`, so change both together. It's one continuous edge-to-edge menu card, and each section title is sticky while you're in that section. Dish rows are two lines (name and price, then details like "8 pc" underneath). The chips row is hidden. A floating **Sections** pill at the bottom shows the current section and opens a bottom sheet listing every section with its dish count. Drag the sheet's header down to close it.
 
 The owner's brief: **fast, smooth, and impressive**. Every change must keep the site fast, so check the performance impact before adding weight.
 
@@ -32,7 +32,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 | `app/page.tsx` | Home: intro → hero (starfield + arch video) → marquee → story (moon + word lighting) → "The Room" horizontal gallery → signature dishes → visit/map → footer + mobile dock. Also holds the JSON-LD `Restaurant` schema. |
 | `app/menu/page.tsx` + `components/MenuBrowser.tsx` | QR menu: small header (logo, kitchen promise), then a client component with sticky section chips (scrollspy) and the menu sections. Review mode lives here too. |
 | `components/PageFX.tsx` | Page-level scroll effects (reveals, count-up, story/moon, lazy map, video play-on-screen, dock/to-top). Runs on whatever markup the page has and cleans up on unmount. |
-| `components/SmoothScroll.tsx` | Lenis instance on `window.LD.lenis`. Scrolls to top on client-side navigation. An old `#hash` URL still lands on its section, then the hash is stripped. |
+| `components/SmoothScroll.tsx` | Lenis instance on `window.LD.lenis`. A link to another page starts at the top; Back/Forward returns to the last scroll position on that page; a reload keeps the browser's own restoration. An old `#hash` URL still lands on its section, then the hash is stripped. |
 | `lib/scroll.ts`, `components/ScrollTo.tsx` | `scrollToId()` and a `<ScrollTo to="visit">` button: smooth-scroll to a section **without changing the URL**. |
 | `components/Nav.tsx`, `Sky.tsx`, `Chrome.tsx` (Footer, Dock), `Brand.tsx` (logo SVG paths), `Icons.tsx` | Shared UI |
 | `public/img/og-home.jpg`, `og-menu.jpg` | Social share images (1200×630) for `/` and `/menu`, rendered by `scripts/og-images.js` (needs Playwright, which isn't a project dependency). The menu one shows five real dishes and prices. If those change, update the script and re-run it, and give the files new names, because `/img/*` is cached for a year. |
@@ -46,7 +46,8 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 5. **No `#hash` links, anywhere.** In-page navigation uses `ScrollTo` buttons (`Nav` turns `href: "#id"` props into them) or `scrollToId()`, and the URL never changes.
 10. **"The Room"** is a pure-CSS auto-scrolling reel. The cards are rendered twice and the track animates to `-50%`. Each card carries its own right margin (not `gap`), so the two halves are exactly equal and the loop is seamless. It pauses on hover. Under reduced motion it stops and becomes swipeable.
 6. **Respect `prefers-reduced-motion`** everywhere. There's already a global CSS override, and JS effects check `matchMedia`.
-7. **Breakpoint** is 860px (nav → burger, hero video becomes full-bleed, dock appears).
+11. **Hover effects go inside `@media (hover:hover)`.** On phones a tap triggers `:hover` and leaves it stuck (e.g. a signature dish card stays navy). Touch gets a short `:active` press-in instead, and the tap highlight is off.
+7. **Breakpoint** is 860px (nav → burger, hero video becomes full-bleed, dock appears). Below it the starfield canvas is `display:none`, because the full-bleed video covers it.
 8. **`backdrop-filter`: write `-webkit-backdrop-filter` first, then `backdrop-filter`.** The build's CSS minifier keeps only the last of the pair. With the standard one first, Chrome, Edge and Android got no blur at all.
 9. **Menu jumps** (chips, review "Show") use `scrollUnderBar()` in `MenuBrowser`, which measures layout position (`offsetTop`), so transforms can't throw it off. The home nav only changes state when the scroll position actually changes.
 

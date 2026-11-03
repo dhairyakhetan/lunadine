@@ -33,7 +33,6 @@ export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: 
         nav.classList.toggle("is-hidden", hide);
         root.classList.toggle("nav-gone", hide);
       }
-      root.style.setProperty("--navh", nav.getBoundingClientRect().height + "px");
       lastY = y; ticking = false;
     };
     const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
@@ -43,13 +42,14 @@ export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: 
   }, []);
 
   // "#id" hrefs are sections on this page: rendered as buttons that smooth-scroll, never as #links.
-  const A = ({ l, className, onClick }: { l: L; className?: string; onClick?: () => void }) =>
+  // A plain function, not a component: a component defined in here would remount every link on each render.
+  const link = (l: L, className?: string, onClick?: () => void) =>
     l.href.startsWith("#") ? (
-      <ScrollTo to={l.href.slice(1)} className={className} onClick={onClick}>{l.label}</ScrollTo>
+      <ScrollTo key={l.href} to={l.href.slice(1)} className={className} onClick={onClick}>{l.label}</ScrollTo>
     ) : l.href.startsWith("tel:") ? (
-      <a href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</a>
+      <a key={l.href} href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</a>
     ) : (
-      <Link href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</Link>
+      <Link key={l.href} href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</Link>
     );
 
   return (
@@ -60,15 +60,15 @@ export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: 
           <Wordmark className="wm" label="Luna Dine" />
         </Link>
         <nav className="nav__links" aria-label="Primary">
-          {links.map(l => <A key={l.href} l={l} />)}
-          <A l={cta} className="btn" />
+          {links.map(l => link(l))}
+          {link(cta, "btn")}
         </nav>
         <button className="burger" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(o => !o)}>
           <span /><span />
         </button>
       </header>
       <div className="sheet" aria-label="Mobile navigation" aria-hidden={!open}>
-        {sheet.map(l => <A key={l.href} l={l} onClick={() => setOpen(false)} />)}
+        {sheet.map(l => link(l, undefined, () => setOpen(false)))}
         <div className="sheet__foot">
           140/2 Salkia School Road, Howrah 711101<br />
           <a href={SITE.tel} style={{ font: "inherit", opacity: 1, transform: "none", display: "inline" }}>{SITE.phone}</a>

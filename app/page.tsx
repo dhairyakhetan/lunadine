@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { preload } from "react-dom";
 import Nav from "@/components/Nav";
 import Sky from "@/components/Sky";
 import PageFX from "@/components/PageFX";
@@ -47,9 +48,12 @@ const jsonLd = {
   hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
 };
 
-const Veg = ({ t }: { t: "v" | "n" | "x" }) => (t === "x" ? null : <i className={t === "v" ? "vg" : "vg n"} />);
+const Veg = ({ t }: { t: "v" | "n" | "x" }) =>
+  t === "x" ? null : <i className={t === "v" ? "vg" : "vg n"} role="img" aria-label={t === "v" ? "Veg" : "Non-veg"} />;
 
 export default function Home() {
+  // The hero video's poster is the first big thing you see (full-screen on phones); start fetching it early.
+  preload("/video/hero-poster.webp", { as: "image", fetchPriority: "high" });
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
