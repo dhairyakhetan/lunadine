@@ -78,12 +78,55 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   };
   /** Scroll so `el` starts just under the sticky bar. On phones each section's title is sticky too (under
    *  the bar), so a section lands flush under the bar and anything inside a section lands under its title. */
-  const scrollUnderBar = (el: HTMLElement | null, gap = 12) => {
-    if (!el) return;
+  const underBarY = (el: HTMLElement, gap = 12) => {
     let off = barH();
     if (!matchMedia("(max-width:700px)").matches) off += gap;
     else if (!el.classList.contains("msec")) off += (el.closest(".msec")?.querySelector<HTMLElement>(".msec__head")?.offsetHeight ?? 0) + gap;
-    scrollToY(Math.max(0, docTop(el) - off));
+    return Math.max(0, docTop(el) - off);
+  };
+  const scrollUnderBar = (el: HTMLElement | null, gap = 12) => { if (el) scrollToY(underBarY(el, gap)); };
+
+  /* Switching All / Veg / Non-veg keeps your place. Just before the switch we note the section you're in and the
+     first dish under the bar (plus the dishes after it in that section), with their positions on screen. After the
+     filtered menu renders, and before it paints, we jump so the first of those dishes that's still shown sits
+     exactly where it was. If none is, we go to the start of that section; if the section is gone too, to the
+     nearest one that's left. */
+  type Anchor = { sec: string; head: number | null; keys: string[]; top: number };
+  const anchor = useRef<Anchor | null>(null);
+  const capture = (): Anchor | null => {
+    const b = body.current;
+    if (!b) return null;
+    const bar = barH();
+    // on phones the current section's title is stuck under the bar, so the reading line is below it
+    let line = bar;
+    if (matchMedia("(max-width:700px)").matches) {
+      const stuck = [...b.querySelectorAll<HTMLElement>(".msec__head")].find(h => { const r = h.getBoundingClientRect(); return r.top <= bar + 1 && r.bottom > bar; });
+      if (stuck) line = stuck.getBoundingClientRect().bottom;
+    }
+    const row = [...b.querySelectorAll<HTMLElement>("li[data-k]")].find(li => li.getBoundingClientRect().bottom > line + 4);
+    const sec = row?.closest<HTMLElement>(".msec");
+    if (!row || !sec) return null;
+    const secTop = sec.getBoundingClientRect().top;
+    if (secTop >= bar - 1) return { sec: sec.id, head: secTop, keys: [], top: 0 }; // its title is in view: keep the section put
+    const rows = [...sec.querySelectorAll<HTMLElement>("li[data-k]")];
+    return { sec: sec.id, head: null, keys: rows.slice(rows.indexOf(row)).map(li => li.dataset.k!), top: row.getBoundingClientRect().top };
+  };
+  const placeY = (a: Anchor): number | null => {
+    const sec = document.getElementById(a.sec);
+    if (sec) {
+      if (a.head !== null) return docTop(sec) - a.head;
+      const rows = new Map([...sec.querySelectorAll<HTMLElement>("li[data-k]")].map(li => [li.dataset.k!, li]));
+      const hit = a.keys.map(k => rows.get(k)).find(Boolean);
+      return hit ? docTop(hit) - a.top : underBarY(sec);
+    }
+    const ids = MENU.map(s => s.id), i = ids.indexOf(a.sec);
+    const near = [...ids.slice(i + 1), ...ids.slice(0, Math.max(0, i)).reverse()].map(id => document.getElementById(id)).find(Boolean);
+    return near ? underBarY(near) : null;
+  };
+  const switchMode = (m: Mode) => {
+    if (m === mode) return;
+    anchor.current = capture();
+    setMode(m);
   };
 
   /* scrollspy: the section crossing the line under the bar is active */
@@ -201,18 +244,20 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   }, []);
   useLayoutEffect(() => { if (mode !== "all" || !restoring.current) document.documentElement.classList.remove("diet-v", "diet-n"); }, [mode]);
 
-  /* diet filter changed: the list above you may have changed, so go back to the start of the menu */
+  /* diet filter changed: save it, then keep the reader's place (see capture/placeY above) before the browser paints */
   const firstMode = useRef(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (firstMode.current) { firstMode.current = false; return; }
     try { mode === "all" ? sessionStorage.removeItem(DIET_KEY) : sessionStorage.setItem(DIET_KEY, mode); } catch {}
     const lenis = window.LD?.lenis;
     lenis?.resize();
     if (restoring.current) { restoring.current = false; dispatchEvent(new Event("scroll")); return; } // a refresh: stay put
-    const b = body.current?.parentElement; // .mbody
-    if (b) {
-      const start = Math.max(0, docTop(b) - barH());
-      if (scrollY > start) lenis ? lenis.scrollTo(start, { immediate: true, force: true }) : window.scrollTo(0, start);
+    const a = anchor.current;
+    anchor.current = null;
+    const y = a && placeY(a);
+    if (y !== null && y !== undefined) {
+      const top = Math.max(0, Math.round(y));
+      lenis ? lenis.scrollTo(top, { immediate: true, force: true }) : window.scrollTo(0, top);
     }
     dispatchEvent(new Event("scroll"));
   }, [mode]);
@@ -269,7 +314,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
               const why = flags?.map(i => MENU_ISSUES[i].detail).join(" ");
               const cls = flags ? (flags.includes(pulse) ? "flag pulse" : "flag") : undefined;
               return (
-                <li key={n} className={cls} title={why} data-n={flags ? n : undefined}>
+                <li key={n} className={cls} title={why} data-k={`${g.t}|${n}`} data-n={flags ? n : undefined}>
                   <Veg t={g.t} />
                   <span className="nm">{n}{flags && <i className="flag__q" aria-label={`Needs confirming: ${why}`}>?</i>}</span>
                   {note && <span className="nt">{note}</span>}
@@ -289,7 +334,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       <div className="mtools" ref={bar}>
         <div className="mfilter" role="group" aria-label="Show dishes">
           {MODES.map(([m, label]) => (
-            <button type="button" key={m} aria-pressed={mode === m} className={`mfilter__${m}`} onClick={() => setMode(m)}>
+            <button type="button" key={m} aria-pressed={mode === m} className={`mfilter__${m}`} onClick={() => switchMode(m)}>
               {m === "v" && <i className="vg" />}{m === "n" && <i className="vg n" />}{label}
             </button>
           ))}
