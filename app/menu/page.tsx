@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Menu — Chinese, Tandoor, Bengali, Thai & Korean in Salkia, Howrah",
   description:
-    "The full Luna Dine menu — soups, Chinese starters, noodles, fried rice, momos, tandoor, biryani, Indian & Bengali curries, breads, mocktails, shakes and desserts, with prices. No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for vegetarian dishes.",
+    "The full Luna Dine menu — soups, Chinese starters, noodles, fried rice, momos, tandoor, biryani & pulao, Indian & Bengali curries, breads, mocktails, shakes and desserts, with prices. No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for vegetarian dishes.",
   alternates: { canonical: "/menu" },
   // A page's openGraph replaces the layout's whole object, so repeat the shared fields.
   openGraph: {
