@@ -2,9 +2,9 @@
 
 Marketing site for **Luna Dine** ("Beyond Fine Dining"), a new exotic multicuisine restaurant at 140/2 Salkia School Road, Howrah 711101 (opened 2026). It has two pages: home (`/`) and the full menu (`/menu`). It is deployed on Vercel.
 
-`/menu` is what the **table QR codes** open, so it is deliberately **only the menu**: logo, kitchen promise, and the sections. No site nav, search, filters, footer or dock. Keep it that way.
+`/menu` is what the **table QR codes** open, so it is deliberately **only the menu**: logo, kitchen promise, an **All / Veg / Non-veg** filter in the sticky bar, and the sections. The filter hides groups of the other diet. Drinks (`t: "x"`) show in every mode. Changing the filter returns you to the start of the menu. No site nav, search, filters, footer or dock. Keep it that way.
 - **Desktop/tablet (>700px):** a sticky row of section chips above the sections, which sit on separate paper cards.
-- **Phones (≤700px):** a separate layout. It's one continuous edge-to-edge menu card, and each section title is sticky while you're in that section. Dish rows are two lines (name and price, then details like "8 pc" underneath). The chips row is hidden. A floating **Sections** pill at the bottom shows the current section and opens a bottom sheet listing every section with its dish count.
+- **Phones (≤700px):** a separate layout. The sticky bar holds only the filter and is a fixed 56px tall; the sticky section titles sit at `top:55px`, so change both together. It's one continuous edge-to-edge menu card, and each section title is sticky while you're in that section. Dish rows are two lines (name and price, then details like "8 pc" underneath). The chips row is hidden. A floating **Sections** pill at the bottom shows the current section and opens a bottom sheet listing every section with its dish count.
 
 The owner's brief: **fast, smooth, and impressive**. Every change must keep the site fast, so check the performance impact before adding weight.
 
