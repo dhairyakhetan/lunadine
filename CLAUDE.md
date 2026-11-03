@@ -58,7 +58,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 - **Logo:** `components/Brand.tsx` holds paths vector-traced from the printed menu. They use `currentColor`. Don't redraw or restyle the mark.
 
 ## Review mode (menu issues)
-`lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a floating **Menu issues** button (bottom right) opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host (passed from the server as `prodHost`, so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
+`lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a floating **Menu issues** button (bottom right) opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host (passed from the server as `prodHost`, so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it, and it also stays hidden while the list is empty. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
 
 ## Kitchen promise
 Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for the vegetarian menu. Don't extend or reword them as stronger claims without the owner.
@@ -66,15 +66,12 @@ Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no f
 ## Content rules
 - **Don't invent facts.** Opening hours are unknown, so they're intentionally absent. Don't add hours, ratings, reviews, awards, chef names, or "since" claims unless the owner provides them.
 - **People in imagery:** the source video includes a puja ceremony with family members and children. Only interior and signage frames are used, and it should stay that way.
-- **Menu text:** spelling was normalised from the printed card (e.g. Schwezan → Schezwan, Puloa → Pulao). These items are **still waiting on the owner's answers**, so leave them as they are until confirmed:
-  - "Continuos" noodles — is it "Continental"?
-  - "Salanta" / "Salanto" gravies.
-  - "Moon Fan" fried rice.
-  - "Royal Hummer".
-  - "Burnt Garlic" (the site adds "Noodles").
-  - "Dewani" vs "Diwani" Handi.
-  - The non-veg Chinese gravy section had 3 rows printed twice; one copy of each is kept.
-  - Prices to confirm: Egg Fried Rice ₹250 vs Egg Schezwan ₹240; Cucumber Salad ₹150.
+- **Menu text:** spelling was normalised from the printed card (e.g. Schwezan → Schezwan, Puloa → Pulao). The owner has confirmed these, so don't "correct" them:
+  - **Continental** noodles (printed "Continuos") and **Salanto** gravies (printed "Salanta"/"Salanto").
+  - **Moon Fan** fried rice, the **Royal Hummer** mocktail, **Burnt Garlic Noodles**, and **Dewani** Handi are correct as named.
+  - The non-veg Chinese gravy rows printed twice on the card were identical, so one copy of each is right.
+  - Egg Fried Rice is ₹240 and Egg Schezwan Fried Rice is ₹250 (the card had them swapped). Cucumber Salad ₹150 and the Diet Coke 330 ml can are correct.
+  - No menu questions are open right now (`lib/menu-issues.ts` is empty).
 - Signature-dish descriptions on the home page were written for the site. The owner may revise them.
 
 ## Housekeeping

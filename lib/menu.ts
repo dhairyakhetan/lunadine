@@ -33,13 +33,13 @@ export const MENU: MenuSection[] = [
   { id: "noodles", title: "Noodles", kicker: "Chinese main course", groups: [
     { label: "Veg", t: "v", items: [
       ["Veg Hakka Noodles", 200], ["Veg Schezwan Noodles", 230], ["Veg Pan Fry Noodles", 250],
-      ["Veg Continuos Noodles", 240], ["Veg Hong Kong Noodles", 240], ["Veg American Chopsuey", 250],
+      ["Veg Continental Noodles", 240], ["Veg Hong Kong Noodles", 240], ["Veg American Chopsuey", 250],
       ["Chilli Garlic Noodles", 230], ["Burnt Garlic Noodles", 240], ["Veg Thukpa", 250], ["Mei Fun Noodles", 270] ]},
     { label: "Non-Veg", t: "n", items: [
       ["Chicken Hakka Noodles", 250], ["Mix Hakka Noodles", 280], ["Egg Hakka Noodles", 220],
       ["Schezwan Chicken Noodles", 280], ["Schezwan Mix Noodles", 310], ["Schezwan Egg Noodles", 250],
       ["Pan Fry Chicken Noodles", 290], ["Pan Fry Mix Noodles", 320], ["Pan Fry Egg Noodles", 260],
-      ["Continuos Chicken Noodles", 290], ["Continuos Mix Noodles", 320], ["Continuos Egg Noodles", 260],
+      ["Continental Chicken Noodles", 290], ["Continental Mix Noodles", 320], ["Continental Egg Noodles", 260],
       ["Hong Kong Chicken Noodles", 300], ["Hong Kong Mix Noodles", 350], ["Hong Kong Egg Noodles", 270],
       ["Chopsuey Chicken Noodles", 280], ["Chopsuey Mix Noodles", 320], ["Thukpa Chicken", 290],
       ["Thukpa Mix", 330], ["Mei Fun Mix Noodles", 300], ["Pad Thai Chicken Noodles", 300], ["Pad Thai Mix Noodles", 350] ]}
@@ -50,8 +50,8 @@ export const MENU: MenuSection[] = [
       ["Classic Indo-Chinese Fried Rice", 220], ["Mushroom Fried Rice", 230], ["Moon Fan Fried Rice", 230],
       ["Singapuri Fried Rice", 220], ["Thai Basil Fried Rice", 240], ["Korean Kimchi Fried Rice", 250] ]},
     { label: "Non-Veg", t: "n", items: [
-      ["Chicken Fried Rice", 260], ["Egg Fried Rice", 250], ["Mixed Fried Rice", 290],
-      ["Chicken Schezwan Rice", 270], ["Egg Schezwan Fried Rice", 240], ["Mix Schezwan Fried Rice", 310],
+      ["Chicken Fried Rice", 260], ["Egg Fried Rice", 240], ["Mixed Fried Rice", 290],
+      ["Chicken Schezwan Rice", 270], ["Egg Schezwan Fried Rice", 250], ["Mix Schezwan Fried Rice", 310],
       ["Chicken Hong Kong Fried Rice", 280], ["Mix Hong Kong Fried Rice", 320],
       ["Classic Indo-Chinese Fried Rice (Chicken)", 280], ["Classic Indo-Chinese Fried Rice (Mix)", 320],
       ["Moon Fan Mix Fried Rice", 300], ["Singapuri Chicken Fried Rice", 270], ["Singapuri Mix Fried Rice", 310],
@@ -61,13 +61,13 @@ export const MENU: MenuSection[] = [
   { id: "chinese-gravy", title: "Chinese Side Dishes", kicker: "In gravy", groups: [
     { label: "Veg", t: "v", items: [
       ["Veg Manchurian (Gravy)", 250, "8 pc"], ["Paneer Manchurian (Gravy)", 280, "8 pc"], ["Chilli Paneer (Gravy)", 300, "8 pc"],
-      ["Schezwan Paneer (Gravy)", 290, "8 pc"], ["Salanta Paneer (Gravy)", 290, "8 pc"] ]},
+      ["Schezwan Paneer (Gravy)", 290, "8 pc"], ["Salanto Paneer (Gravy)", 290, "8 pc"] ]},
     { label: "Chicken", t: "n", items: [
       ["Chilli Chicken (Gravy)", 290, "8 pc"], ["Chicken Manchurian (Gravy)", 280, "8 pc"], ["Schezwan Chicken (Gravy)", 290, "8 pc"] ]},
     { label: "Fish", t: "n", items: [
-      ["Chilli Fish", 380], ["Fish Manchurian", 370], ["Hong Kong Fish", 390], ["Salanta Fish", 390] ]},
+      ["Chilli Fish", 380], ["Fish Manchurian", 370], ["Hong Kong Fish", 390], ["Salanto Fish", 390] ]},
     { label: "Prawn", t: "n", items: [
-      ["Chilli Prawn", 410], ["Prawn Manchurian", 400], ["Hong Kong Prawn", 420], ["Salanta Prawn", 420] ]}
+      ["Chilli Prawn", 410], ["Prawn Manchurian", 400], ["Hong Kong Prawn", 420], ["Salanto Prawn", 420] ]}
   ]},
   { id: "momos", title: "Momos", kicker: "Six to a plate", groups: [
     { label: "Veg", t: "v", items: [

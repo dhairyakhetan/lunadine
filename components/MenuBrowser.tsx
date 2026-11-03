@@ -301,7 +301,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         </div>
       </div>
 
-      {review && (
+      {review && MENU_ISSUES.length > 0 && (
         <div className="issues" ref={issuesBox}>
           {issuesOpen && (
             <div className="issues__panel" id="menu-issues" role="dialog" aria-label="Menu issues" data-lenis-prevent>

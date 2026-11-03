@@ -26,13 +26,5 @@ npm run build   # production build
 - **QR menu:** `/menu` is the page the table QR codes open. It's only the menu, with no nav, search or filters.
 - **Menu issues / review mode:** open `/menu?review` (or any preview deploy) to see the **Menu issues** button and the flagged dishes. The list lives in `lib/menu-issues.ts`.
 - **Opening hours:** unknown, so the site doesn't show any.
-- **Menu questions still waiting on the owner** (the items are left as printed until answered):
-  - "Continuos" noodles. Is it "Continental"?
-  - "Salanta" / "Salanto" gravies: what is the correct name?
-  - "Moon Fan" fried rice.
-  - "Royal Hummer".
-  - "Burnt Garlic" (the site adds "Noodles").
-  - "Dewani" vs "Diwani" Handi.
-  - The non-veg Chinese gravy section had 3 rows printed twice.
-  - Prices to confirm: Egg Fried Rice ₹250 vs Egg Schezwan ₹240; Cucumber Salad ₹150.
+- **Menu questions:** all answered by the owner (Continental noodles, Salanto gravies, Egg Fried Rice ₹240 / Egg Schezwan ₹250; the rest confirmed as printed). New questions go in `lib/menu-issues.ts`; the review button only shows while that list has entries.
 - **Live address:** `https://luna-dine.vercel.app`, set as `SITE.url` in `lib/site.ts`. Share previews, the sitemap and Google's restaurant details use it. If the domain changes, update it there and redeploy.
