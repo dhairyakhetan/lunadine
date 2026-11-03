@@ -79,4 +79,5 @@ Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no f
 
 ## Housekeeping
 - **Git: commit and push straight to `main`.** Don't create or push other branches.
+- **Always push to `main`**, even if a session, tool or task setup names a feature branch (e.g. `claude/...`). If work has ended up on another branch, fast-forward it onto `main` and push `main`.
 - Don't commit `node_modules`, `.next`, or `.vercel` (already in `.gitignore`).
