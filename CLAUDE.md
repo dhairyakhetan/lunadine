@@ -64,7 +64,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 `lib/menu-issues.ts` lists the open questions about menu names and prices. On `/menu`, a floating **Menu issues** button (bottom right) opens that list, and flagged dishes get a red **?** and a wavy underline. It only shows when the hostname isn't the production host (passed from the server as `prodHost`, so localhost and preview deploys), or when the URL has `?review` (e.g. `/menu?review`). Customers on the real domain never see it, and it also stays hidden while the list is empty. When the owner answers a question, update `lib/menu.ts` and delete the entry from `lib/menu-issues.ts`.
 
 ## Kitchen promise
-Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for the vegetarian menu. Don't extend or reword them as stronger claims without the owner.
+Owner-supplied claims shown in the menu header and beside the Signatures headline on the home page (keep the two lists the same): No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for the vegetarian menu. Don't extend or reword them as stronger claims without the owner.
 
 ## Content rules
 - **Don't invent facts.** The owner says it **opens in the afternoon**; exact times are unknown, so the Visit section says only "Opens in the afternoon" and there's no `openingHours` in the JSON-LD. Add exact times only when the owner gives them. Don't add hours, ratings, reviews, awards, chef names, or "since" claims unless the owner provides them.

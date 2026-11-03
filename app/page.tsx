@@ -6,7 +6,7 @@ import Sky from "@/components/Sky";
 import PageFX from "@/components/PageFX";
 import { Footer, Dock } from "@/components/Chrome";
 import { Emblem, Ornament, EMBLEM_D, EMBLEM_VB } from "@/components/Brand";
-import { IArrow, IPhone, IMail, IClock, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
+import { IArrow, IPhone, IMail, IClock, ISeal, ILeaf, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
 import { TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
 import { SITE } from "@/lib/site";
 
@@ -204,7 +204,16 @@ export default function Home() {
                   <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>detour</em></span></span>
                 </h2>
               </div>
-              <div className="ornament" data-reveal><Ornament /></div>
+              <div className="sig__aside" data-reveal style={{ "--d": ".1s" } as React.CSSProperties}>
+                <div className="ornament"><Ornament /></div>
+                <p>A short list from a menu of {TOTAL_DISHES}, and every plate comes with the kitchen&rsquo;s promise</p>
+                <ul className="sig__promise" aria-label="Our kitchen promise">
+                  <li><ISeal />No Ajinomoto</li>
+                  <li><ISeal />No trans fat</li>
+                  <li><ISeal />No food colour</li>
+                  <li className="sig__veg"><ILeaf />Separate chef &amp; utensils for our vegetarian menu</li>
+                </ul>
+              </div>
             </div>
             <div className="dishes">
               {DISHES.map((x, i) => (
