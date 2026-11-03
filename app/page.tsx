@@ -212,7 +212,7 @@ export default function Home() {
                 <span className="kicker" data-reveal>From the kitchen</span>
                 <h2 className="h-l split">
                   <span className="line"><span>Plates worth</span></span>
-                  <span className="line line--road"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
+                  <span className="line line--road"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
                 </h2>
               </div>
               <div className="sig__aside" data-reveal style={{ "--d": ".1s" } as React.CSSProperties}>

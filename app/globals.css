@@ -288,10 +288,10 @@ em,.it{font-style:italic;color:var(--gold)}
 /* "detour": a winding road draws itself under the word, with a little moon at its end */
 .split .line.line--road{padding-bottom:.5em;margin-bottom:-.44em} /* room for the road under "detour" (beats .split .line below) */
 .detour{position:relative;display:inline-block}
-.detour__road{position:absolute;left:2%;bottom:-.44em;width:104%;height:.3em;overflow:visible}
-.detour__road path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.4s var(--ease) 1s}
+.detour__road{position:absolute;left:2%;bottom:-.44em;width:104%;height:.3em;overflow:visible;clip-path:inset(-60% 100% -60% -6%);transition:clip-path 1.4s var(--ease) 1s} /* revealed left to right by a sweeping clip */
+.detour__road path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .detour__road circle{fill:var(--gold);stroke:var(--navy);stroke-width:1.5;vector-effect:non-scaling-stroke;transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform .6s var(--ease) 2.2s}
-.split.is-in .detour__road path{stroke-dashoffset:0}
+.split.is-in .detour__road{clip-path:inset(-60% -6% -60% -6%)}
 .split.is-in .detour__road circle{transform:none}
 .vg{display:inline-grid;place-items:center;width:13px;height:13px;border:1.5px solid var(--veg);border-radius:2px;vertical-align:-1px;flex:none}
 .vg::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--veg)}
@@ -551,7 +551,7 @@ html:not(.diet-v):not(.diet-n) .tm[data-m=all],.diet-v .tm[data-m=v],.diet-n .tm
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   [data-reveal],.split .line>span,.reveal-in,.hero h1 .line>span,.hero__arch{opacity:1!important;transform:none!important}
   .story__text .w{opacity:1}
-  .detour__road path{stroke-dashoffset:0}.detour__road circle{transform:none}
+  .detour__road{clip-path:none}.detour__road circle{transform:none}
 }
 .ornament svg{width:100%;height:auto}
 

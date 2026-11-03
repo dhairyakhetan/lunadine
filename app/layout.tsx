@@ -51,7 +51,7 @@ export const viewport: Viewport = {
 // On /menu, also apply the saved Veg / Non-veg filter before paint (see MenuBrowser), so a refresh doesn't flash the full menu.
 const introScript = `try{var h=document.documentElement,d=sessionStorage.getItem('ld-diet');if(location.pathname!=='/'||sessionStorage.getItem('ld-intro')||matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('no-intro');if(location.pathname==='/menu'&&(d==='v'||d==='n'))h.classList.add('diet-'+d)}catch(e){}`;
 
-const noScriptCss = "[data-reveal],.split .line>span{opacity:1!important;transform:none!important}.story__text .w{opacity:1}.portal{height:auto}.portal__stage{position:relative}.portal__arch{visibility:visible!important}.portal__cap{opacity:1}.detour__road path{stroke-dashoffset:0}.detour__road circle{transform:none}";
+const noScriptCss = "[data-reveal],.split .line>span{opacity:1!important;transform:none!important}.story__text .w{opacity:1}.portal{height:auto}.portal__stage{position:relative}.portal__arch{visibility:visible!important}.portal__cap{opacity:1}.detour__road{clip-path:none}.detour__road circle{transform:none}";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
