@@ -12,7 +12,8 @@ const Veg = ({ t, quiet }: { t: Diet; quiet?: boolean }) => {
 };
 const price = (p: number | "MRP") => (typeof p === "number" ? `₹${p}` : p);
 /** Moon phase for section i of n: the menu waxes from a thin crescent at the first section to a full moon at the last. */
-const phase = (i: number, n: number) => ({ "--p": (n > 1 ? 0.12 + 0.88 * i / (n - 1) : 1).toFixed(3) }) as React.CSSProperties;
+const phaseOf = (i: number, n: number) => (n > 1 ? 0.12 + 0.88 * i / (n - 1) : 1).toFixed(3);
+const phase = (i: number, n: number) => ({ "--p": phaseOf(i, n) }) as React.CSSProperties;
 
 /* Review mode: the "Menu issues" button and inline flags. Off on the production domain unless the
    URL has ?review, so customers never see it; on localhost and preview deploys it's always on. */
@@ -37,14 +38,21 @@ const filterMenu = (mode: Mode) => MENU
     veg: s.groups.some(g => g.t === "v"), non: s.groups.some(g => g.t === "n"),
   }));
 
-/* The chosen filter is remembered for the tab (sessionStorage), so a refresh or Back keeps it. layout.tsx
-   reads it before first paint and sets html.diet-v / .diet-n; globals.css then hides the other diet's groups
-   (via these data-v / data-n counts) until React renders the filtered menu, so there's no flash or jump. */
+/* All three menus are worked out once, on arrival. The page renders the full menu a single time, and the filter
+   is applied by CSS: html.diet-v / .diet-n hide the other diet's groups, sections, chips and sheet tiles (via
+   these data-v / data-n counts and data-t). So a switch re-renders no dish rows, just flips a class, and every
+   switch, the first included, costs the same. The choice is remembered for the tab (sessionStorage); layout.tsx
+   sets the class before first paint, so a refresh or Back shows the same menu with no flash or jump. */
 const DIET_KEY = "ld-diet";
+const FILTERED: Record<Mode, ReturnType<typeof filterMenu>> = { all: filterMenu("all"), v: filterMenu("v"), n: filterMenu("n") };
 const DIET_COUNTS = new Map(MENU.map(s => [s.id, {
   "data-v": s.groups.filter(g => g.t !== "n").length, // groups left under Veg
   "data-n": s.groups.filter(g => g.t !== "v").length, // groups left under Non-veg
 }]));
+/* each section's moon phase in each mode (--pa / --pv / --pn); globals.css picks the one for the current filter */
+const SEC_PHASE = new Map<string, Record<string, string>>(MENU.map(s => [s.id, {}]));
+(["all", "v", "n"] as Mode[]).forEach(m => FILTERED[m].forEach((s, i, a) => { SEC_PHASE.get(s.id)![m === "all" ? "--pa" : `--p${m}`] = phaseOf(i, a.length); }));
+const shown = (el: Element) => el.getClientRects().length > 0; // false when the filter hides it
 
 /** Page Y of an element from layout (offsetTop chain), unaffected by transforms. */
 const docTop = (el: HTMLElement) => {
@@ -61,7 +69,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const [pulse, setPulse] = useState(-1);
   const [sheet, setSheet] = useState(false);
   const [mode, setMode] = useState<Mode>("all");
-  const secs = useMemo(() => filterMenu(mode), [mode]);
+  const secs = FILTERED[mode];
 
   const bar = useRef<HTMLDivElement>(null);
   const filt = useRef<HTMLDivElement>(null);
@@ -89,138 +97,224 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   };
   const scrollUnderBar = (el: HTMLElement | null, gap = 12) => { if (el) scrollToY(underBarY(el, gap)); };
 
-  /* Switching All / Veg / Non-veg keeps your place. Just before the switch we note the section you're in and the
-     first dish under the bar (plus the dishes after it in that section), with their positions on screen. After the
-     filtered menu renders, and before it paints, we jump so the first of those dishes that's still shown sits
-     exactly where it was. If none is, we go to the start of that section; if the section is gone too, to the
-     nearest one that's left. */
+  /* Switching All / Veg / Non-veg keeps your place. Just before the switch we note the first dish under the bar
+     (plus the dishes after it in its section) and where it is on screen. After the class flips, and before the
+     browser paints, we jump so the first of those dishes that's still shown sits exactly where it was. If none is,
+     we go to the start of that section; if the section is gone too, to the nearest one that's left. */
   type Anchor = { sec: string; head: number | null; keys: string[]; top: number };
   const anchor = useRef<Anchor | null>(null);
+  /** On phones, the section title currently stuck under the bar. */
+  const stuckHead = () => {
+    if (!matchMedia("(max-width:700px)").matches) return null;
+    const line = bar.current?.getBoundingClientRect().bottom ?? 0;
+    return [...(body.current?.querySelectorAll<HTMLElement>(".msec__head") ?? [])]
+      .find(h => { const r = h.getBoundingClientRect(); return r.height > 0 && r.top <= line + 1 && r.bottom > line; }) ?? null;
+  };
+  /** Top of the part of the screen where dishes scroll: under the bar, and on phones under the stuck section title. */
+  const readingLine = () => Math.max(0, stuckHead()?.getBoundingClientRect().bottom ?? bar.current?.getBoundingClientRect().bottom ?? 0);
   const capture = (): Anchor | null => {
     const b = body.current;
     if (!b) return null;
-    const bar = barH();
-    // on phones the current section's title is stuck under the bar, so the reading line is below it
-    let line = bar;
-    if (matchMedia("(max-width:700px)").matches) {
-      const stuck = [...b.querySelectorAll<HTMLElement>(".msec__head")].find(h => { const r = h.getBoundingClientRect(); return r.top <= bar + 1 && r.bottom > bar; });
-      if (stuck) line = stuck.getBoundingClientRect().bottom;
-    }
-    const row = [...b.querySelectorAll<HTMLElement>("li[data-k]")].find(li => li.getBoundingClientRect().bottom > line + 4);
+    const line = readingLine(), barBottom = bar.current?.getBoundingClientRect().bottom ?? 0;
+    const row = [...b.querySelectorAll<HTMLElement>("li[data-k]")].find(li => shown(li) && li.getBoundingClientRect().bottom > line + 4);
     const sec = row?.closest<HTMLElement>(".msec");
     if (!row || !sec) return null;
     const secTop = sec.getBoundingClientRect().top;
-    if (secTop >= bar - 1) return { sec: sec.id, head: secTop, keys: [], top: 0 }; // its title is in view: keep the section put
-    const rows = [...sec.querySelectorAll<HTMLElement>("li[data-k]")];
+    if (secTop >= barBottom - 1) return { sec: sec.id, head: secTop, keys: [], top: 0 }; // its title is in view: keep the section put
+    const rows = [...sec.querySelectorAll<HTMLElement>("li[data-k]")].filter(shown);
     return { sec: sec.id, head: null, keys: rows.slice(rows.indexOf(row)).map(li => li.dataset.k!), top: row.getBoundingClientRect().top };
   };
   const placeY = (a: Anchor): number | null => {
     const sec = document.getElementById(a.sec);
-    if (sec) {
+    if (sec && shown(sec)) {
       if (a.head !== null) return docTop(sec) - a.head;
-      const rows = new Map([...sec.querySelectorAll<HTMLElement>("li[data-k]")].map(li => [li.dataset.k!, li]));
+      const rows = new Map([...sec.querySelectorAll<HTMLElement>("li[data-k]")].filter(shown).map(li => [li.dataset.k!, li]));
       const hit = a.keys.map(k => rows.get(k)).find(Boolean);
       return hit ? docTop(hit) - a.top : underBarY(sec);
     }
     const ids = MENU.map(s => s.id), i = ids.indexOf(a.sec);
-    const near = [...ids.slice(i + 1), ...ids.slice(0, Math.max(0, i)).reverse()].map(id => document.getElementById(id)).find(Boolean);
+    const near = [...ids.slice(i + 1), ...ids.slice(0, Math.max(0, i)).reverse()].map(id => document.getElementById(id)).find(el => el && shown(el));
     return near ? underBarY(near) : null;
   };
-  /* The switch animates (unless reduced motion): what stays glides from where it was to where it lands, what
-     leaves squashes flat and fades (a copy of it, since React has already removed it), and what arrives springs up
-     line by line with its veg / non-veg mark popping in. Only what's on screen moves, with transform and opacity
-     through the Web Animations API, so React's classes are never touched (gotcha 1). */
-  const MOVERS = "li[data-k], .mgrp > h3, .msec__head";
+
+  /* The switch animates (unless reduced motion). Everything on screen before or after takes part:
+     - what stays glides from where it was to where it lands, also when that's off screen, so nothing just vanishes;
+     - what leaves squashes flat and fades: a copy of it, drawn where it was, in a layer clipped below the bar that
+       keeps up with scrolling;
+     - what arrives springs up line by line, its veg / non-veg mark popping in;
+     - desktop: each paper card's background (its ::before) stretches or shrinks from its old box to its new one, a
+       card that goes away fades behind the menu, and the section chips glide sideways;
+     - phones: if a different section's title ends up stuck under the bar, its words fade up.
+     Web Animations on transform and opacity only, never React's classes (gotcha 1). A second tap mid-animation
+     starts from where things are on screen right then, not from where they were heading. */
+  const MOVERS = "li[data-k], .mgrp > h3, .msec__head, .mnote";
   const keyOf = (el: HTMLElement) =>
-    el.tagName === "LI" ? el.dataset.k! : el.tagName === "H3" ? `g|${el.closest(".msec")?.id}|${el.textContent}` : `s|${el.closest(".msec")?.id}`;
-  /** Top of the part of the screen where dishes scroll: under the bar, and on phones under the stuck section title. */
-  const readingLine = () => {
-    let line = Math.max(0, bar.current?.getBoundingClientRect().bottom ?? 0);
-    if (matchMedia("(max-width:700px)").matches) {
-      const stuck = [...(body.current?.querySelectorAll<HTMLElement>(".msec__head") ?? [])].find(h => { const r = h.getBoundingClientRect(); return r.top <= line + 1 && r.bottom > line; });
-      if (stuck) line = stuck.getBoundingClientRect().bottom;
-    }
-    return line;
-  };
-  type Snap = { pos: Map<string, { x: number; y: number }>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number };
+    el.tagName === "LI" ? el.dataset.k!
+      : el.tagName === "H3" ? `g|${el.closest(".msec")?.id}|${el.textContent}`
+      : el.classList.contains("mnote") ? "note"
+      : el.dataset.id ? `c|${el.dataset.id}`
+      : `s|${el.closest(".msec")?.id}`;
+  type Box = { x: number; y: number; h: number; vis: boolean };
+  type Snap = { pos: Map<string, Box>; cards: Map<string, Box>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number; stuck: string | null };
   const snap = useRef<Snap | null>(null);
-  const ghosts = useRef<HTMLElement | null>(null);
-  const SQUISH = "cubic-bezier(.34,1.42,.64,1)"; // a little overshoot: the squish
+  const layers = useRef(new Set<() => void>()); // cleanup for each live layer of copies
+  const freezers = useRef(new Set<() => void>()); // stop a layer following the scroll
+  const EASE = "cubic-bezier(.22,1,.36,1)";
+  const GLIDE = "cubic-bezier(.4,.8,.3,1)"; // starts at 2x its average speed (EASE starts at 4.5x, which reads as a skip)
+  const cardsOn = () => matchMedia("(min-width:701px)").matches; // phones have one continuous card instead
+  /** our running Web Animations (not CSS transitions, like the moons and the pill, which retarget by themselves) */
+  const ourAnims = (root: Element | null) =>
+    (root?.getAnimations({ subtree: true }) ?? []).filter(a => !(a instanceof CSSTransition) && !(a instanceof CSSAnimation));
+  /** a card's paper as it is on screen right now (its ::before may be mid-animation: translateY + scaleY from the top) */
+  const cardBox = (el: HTMLElement, line: number): Box => {
+    const r = el.getBoundingClientRect();
+    const m = getComputedStyle(el, "::before").transform.match(/matrix\(([^)]+)\)/)?.[1].split(",").map(Number);
+    const y = r.top + (m ? m[5] : 0), h = r.height * (m ? m[3] : 1);
+    return { x: r.left, y, h, vis: y + h > line && y < innerHeight };
+  };
   const snapshot = (): Snap | null => {
     const b = body.current;
     if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
-    b.getAnimations({ subtree: true }).forEach(a => a.finish()); // a quick second tap: start from where things settle
-    const line = readingLine(), barBottom = bar.current?.getBoundingClientRect().bottom ?? 0;
-    const pos = new Map<string, { x: number; y: number }>(), seen: Snap["seen"] = [];
-    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => {
-      const r = el.getBoundingClientRect();
-      if (el.classList.contains("msec__head") && r.top <= barBottom + 1) return; // a stuck title stays put
-      const k = keyOf(el);
-      pos.set(k, { x: r.left, y: r.top });
-      if (r.bottom > line && r.top < innerHeight) seen.push({ k, el, r });
-    });
-    return { pos, seen, line };
+    const line = readingLine(), vh = innerHeight, stuck = stuckHead();
+    const pos = new Map<string, Box>(), cards = new Map<string, Box>(), seen: Snap["seen"] = [];
+    const take = (el: HTMLElement, visible: (r: DOMRect) => boolean) => {
+      if (!shown(el) || el === stuck) return;
+      const r = el.getBoundingClientRect(), k = keyOf(el), vis = visible(r); // on-screen rects, mid-animation included
+      pos.set(k, { x: r.left, y: r.top, h: r.height, vis });
+      if (vis) seen.push({ k, el, r });
+    };
+    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => take(el, r => r.bottom > line && r.top < vh));
+    const c = chips.current, cr = c?.getBoundingClientRect();
+    c?.querySelectorAll<HTMLElement>(":scope > button").forEach(el => take(el, r => !!cr && r.right > cr.left && r.left < cr.right));
+    if (cardsOn()) b.querySelectorAll<HTMLElement>(".msec").forEach(el => { if (shown(el)) cards.set(el.id, cardBox(el, line)); });
+    // that's the screen as it is; now drop running animations so the new ones start from exactly here
+    [...ourAnims(b), ...ourAnims(bar.current)].forEach(a => a.cancel());
+    return { pos, cards, seen, line, stuck: stuck?.closest(".msec")?.id ?? null };
   };
+
+  /** A layer for copies of what left, clipped to the reading area. It keeps up with any scrolling while they fade,
+   *  so they don't drift. `behind` puts it under the menu (for card backgrounds). */
+  const ghostLayer = (top: number, behind: boolean) => {
+    const outer = document.createElement("div"), inner = document.createElement("div");
+    outer.className = behind ? "mghosts mghosts--back" : "mghosts";
+    outer.style.top = top + "px";
+    inner.style.cssText = "position:absolute;left:0;right:0;top:0;bottom:0";
+    outer.appendChild(inner);
+    document.body.appendChild(outer);
+    const y0 = scrollY;
+    const follow = () => { inner.style.transform = `translateY(${y0 - scrollY}px)`; };
+    addEventListener("scroll", follow, { passive: true });
+    const freeze = () => { removeEventListener("scroll", follow); freezers.current.delete(freeze); };
+    const done = () => { freeze(); outer.remove(); layers.current.delete(done); };
+    layers.current.add(done);
+    freezers.current.add(freeze);
+    setTimeout(done, 450);
+    return { inner, top };
+  };
+
   const animateSwitch = (sn: Snap) => {
     const b = body.current;
     if (!b) return;
-    const line = readingLine(), barBottom = bar.current?.getBoundingClientRect().bottom ?? 0, vh = innerHeight;
-    const now = new Set<string>();
+    const line = readingLine(), vh = innerHeight;
+    const glide = (el: HTMLElement, dx: number, dy: number) => el.animate([
+      { transform: `translate(${dx}px,${dy}px) scale(1,.92)` },
+      { transform: "translate(0,0) scale(1,1.04)", offset: 0.7 },
+      { transform: "none" },
+    ], { duration: 560, delay: 80, easing: GLIDE, fill: "backwards" }); // after the leavers have mostly gone
     let n = 0;
-    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => {
-      const k = keyOf(el);
-      now.add(k);
-      const r = el.getBoundingClientRect();
-      if (r.bottom < line - 40 || r.top > vh) return;
-      if (el.classList.contains("msec__head") && r.top <= barBottom + 1) return;
-      const o = sn.pos.get(k);
-      if (o && Math.abs(o.y - r.top) < vh) {
+    const enter = (el: HTMLElement) => {
+      const delay = 100 + Math.min(n++ * 28, 280), o = { transformOrigin: "0 50%" };
+      el.animate([
+        { ...o, opacity: 0, transform: "translateY(12px) scale(.94,.4)" },
+        { ...o, opacity: 1, transform: "scale(1.01,1.08)", offset: 0.55 },
+        { ...o, opacity: 1, transform: "none" },
+      ], { duration: 520, delay, easing: EASE, fill: "backwards" });
+      el.querySelectorAll<HTMLElement>(":scope > .vg").forEach(v => v.animate(
+        [{ transform: "scale(0)" }, { transform: "scale(1.35)", offset: 0.6 }, { transform: "none" }],
+        { duration: 480, delay: delay + 80, easing: EASE, fill: "backwards" }));
+    };
+    // glide only what moves up to about a screen; something that was on screen and is now far away leaves (a copy
+    // squashes out where it was), and something that comes from far away arrives
+    const near = vh * 0.9, staying = new Set<string>(), stuck = stuckHead();
+    const move = (el: HTMLElement, visible: (r: DOMRect) => boolean) => {
+      if (!shown(el) || el === stuck) return;
+      const k = keyOf(el), r = el.getBoundingClientRect(), o = sn.pos.get(k), vis = visible(r);
+      const reach = o?.vis && vis ? near : near * 0.55; // coming from (or going) off screen: a shorter sweep
+      if (o && (o.vis || vis) && Math.abs(o.y - r.top) <= reach) {
+        staying.add(k);
         const dx = o.x - r.left, dy = o.y - r.top;
-        if (Math.abs(dx) + Math.abs(dy) < 1) return;
-        el.animate([
-          { transform: `translate(${dx}px,${dy}px) scale(1,.92)` },
-          { transform: "translate(0,0) scale(1,1.04)", offset: 0.7 },
-          { transform: "none" },
-        ], { duration: 560, delay: 80, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" }); // after the leavers have mostly gone
+        if (Math.abs(dx) + Math.abs(dy) >= 1) glide(el, dx, dy);
       } else {
-        const delay = 100 + Math.min(n++ * 28, 280), from = { transformOrigin: "0 50%" };
-        el.animate([
-          { ...from, opacity: 0, transform: "translateY(12px) scale(.94,.4)" },
-          { ...from, opacity: 1, transform: "scale(1.01,1.08)", offset: 0.55 },
-          { ...from, opacity: 1, transform: "none" },
-        ], { duration: 520, delay, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" });
-        el.querySelectorAll<HTMLElement>(":scope > .vg").forEach(v => v.animate(
-          [{ transform: "scale(0)" }, { transform: "scale(1.35)", offset: 0.6 }, { transform: "none" }],
-          { duration: 480, delay: delay + 80, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" }));
+        if (!o?.vis) staying.add(k); // wasn't on screen: nothing to take away
+        if (vis) enter(el);
       }
-    });
-    // what left: animate a copy where it was, in a layer clipped to the reading area (so it never covers the bar)
-    const gone = sn.seen.filter(g => !now.has(g.k));
-    ghosts.current?.remove();
-    if (!gone.length) return;
-    const layer = document.createElement("div");
-    layer.className = "mghosts";
-    layer.style.top = sn.line + "px";
-    gone.forEach((g, i) => {
-      const wrap = document.createElement(g.el.tagName === "LI" ? "ul" : "div");
-      wrap.className = g.el.tagName === "LI" ? "items" : g.el.tagName === "H3" ? "mgrp" : "";
-      wrap.style.cssText = `position:absolute;left:${g.r.left}px;top:${g.r.top - sn.line}px;width:${g.r.width}px;margin:0;padding:0;columns:auto`;
-      const c = g.el.cloneNode(true) as HTMLElement;
-      if (c.classList.contains("msec__head")) c.style.position = "static";
-      wrap.appendChild(c);
-      layer.appendChild(wrap);
-      c.animate([
-        { opacity: 1, transform: "none", transformOrigin: "0 50%" },
-        { opacity: 0, transform: "scale(.97,.25)", transformOrigin: "0 50%" },
-      ], { duration: 200, delay: Math.min(i * 8, 48), easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
-    });
-    document.body.appendChild(layer);
-    ghosts.current = layer;
-    setTimeout(() => { layer.remove(); if (ghosts.current === layer) ghosts.current = null; }, 400);
+    };
+    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => move(el, r => r.bottom > line - 40 && r.top < vh));
+    const c = chips.current, cr = c?.getBoundingClientRect();
+    c?.querySelectorAll<HTMLElement>(":scope > button").forEach(el => move(el, r => !!cr && r.right > cr.left && r.left < cr.right));
+    // phones: a different section's title is now stuck under the bar: its words fade up
+    if (stuck && stuck.closest(".msec")?.id !== sn.stuck) [...stuck.children].forEach(ch => enter(ch as HTMLElement));
+
+    // desktop: paper cards stretch or shrink from their old box to the new one; one that went away fades out behind
+    const gonecards: Box[] = [];
+    if (cardsOn()) {
+      const ids = new Set<string>();
+      b.querySelectorAll<HTMLElement>(".msec").forEach(el => {
+        if (!shown(el)) return;
+        ids.add(el.id);
+        const r = el.getBoundingClientRect(), o = sn.cards.get(el.id), vis = r.bottom > line && r.top < vh;
+        if (o && (o.vis || vis)) {
+          const dy = o.y - r.top, sy = o.h / Math.max(1, r.height);
+          if (Math.abs(dy) >= 1 || Math.abs(sy - 1) > 0.002) el.animate([
+            { transform: `translateY(${dy}px) scaleY(${sy.toFixed(4)})`, transformOrigin: "50% 0" },
+            { transform: "none", transformOrigin: "50% 0" },
+          ], { duration: 560, delay: 80, easing: GLIDE, fill: "backwards", pseudoElement: "::before" });
+        } else if (vis) el.animate([
+          { opacity: 0, transform: "scaleY(.92)", transformOrigin: "50% 0" },
+          { opacity: 1, transform: "none", transformOrigin: "50% 0" },
+        ], { duration: 420, delay: 80, easing: EASE, fill: "backwards", pseudoElement: "::before" });
+      });
+      sn.cards.forEach((o, id) => { if (!ids.has(id) && o.vis) gonecards.push(o); });
+    }
+
+    // what left: copies where they were, squashing out
+    const gone = sn.seen.filter(g => !staying.has(g.k) && !g.k.startsWith("c|")); // chips just make room as the row glides
+    if (gone.length) {
+      const { inner, top } = ghostLayer(sn.line, false);
+      gone.forEach((g, i) => {
+        const wrap = document.createElement(g.el.tagName === "LI" ? "ul" : "div");
+        wrap.className = g.el.tagName === "LI" ? "items" : g.el.tagName === "H3" ? "mgrp" : "";
+        wrap.style.cssText = `position:absolute;left:${g.r.left}px;top:${g.r.top - top}px;width:${g.r.width}px;margin:0;padding:0;columns:auto`;
+        const copy = g.el.cloneNode(true) as HTMLElement;
+        if (copy.classList.contains("msec__head")) {
+          copy.style.position = "static";
+          const m = g.el.querySelector(".mphase"), mc = copy.querySelector<HTMLElement>(".mphase");
+          if (m && mc) mc.style.setProperty("--p", getComputedStyle(m).getPropertyValue("--p")); // keep its moon
+        }
+        wrap.appendChild(copy);
+        inner.appendChild(wrap);
+        copy.animate([
+          { opacity: 1, transform: "none", transformOrigin: "0 50%" },
+          { opacity: 0, transform: "scale(.97,.25)", transformOrigin: "0 50%" },
+        ], { duration: 200, delay: Math.min(i * 8, 48), easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
+      });
+    }
+    if (gonecards.length) {
+      const { inner, top } = ghostLayer(sn.line, true), w = b.getBoundingClientRect();
+      gonecards.forEach(o => {
+        const card = document.createElement("div");
+        card.className = "mghost-card";
+        card.style.cssText = `left:${w.left}px;top:${o.y - top}px;width:${w.width}px;height:${o.h}px`;
+        inner.appendChild(card);
+        card.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.98,.6)" }],
+          { duration: 260, easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
+      });
+    }
   };
 
   /* the gold pill behind the pressed filter button slides over: its leading edge first, the trailing edge catching
-     up, so it stretches and settles (two @property lengths with different timings, see globals.css) */
+     up, so it stretches and settles (two @property lengths with different timings, see globals.css). It's measured
+     again, without animating, whenever the buttons change size (e.g. when the font arrives). */
   const placeThumb = (animate: boolean) => {
     const g = filt.current, t = thumb.current, btn = g?.querySelector<HTMLElement>('button[aria-pressed="true"]');
     if (!g || !t || !btn) return;
@@ -239,15 +333,21 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     setThumbOn(true);
   }, [mode]);
   useEffect(() => {
-    const onResize = () => placeThumb(false);
-    addEventListener("resize", onResize, { passive: true });
-    return () => { removeEventListener("resize", onResize); ghosts.current?.remove(); };
+    const g = filt.current, all = layers.current;
+    if (!g) return;
+    const ro = new ResizeObserver(() => placeThumb(false));
+    ro.observe(g);
+    g.querySelectorAll("button").forEach(btn => ro.observe(btn));
+    return () => { ro.disconnect(); all.forEach(done => done()); };
   }, []);
 
   const switchMode = (m: Mode) => {
     if (m === mode) return;
+    anchor.current = capture(); // first: it reads where things are on screen, before running animations are dropped
     snap.current = snapshot();
-    anchor.current = capture();
+    // copies still fading from a quick earlier tap stay where they are on screen: the re-anchoring scroll that's
+    // about to happen keeps the menu in place on screen too, so they mustn't follow it
+    [...freezers.current].forEach(f => f());
     setMode(m);
   };
 
@@ -259,8 +359,9 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       const b = body.current;
       if (!b) return;
       const line = barH() + 40;
-      let id = b.querySelector<HTMLElement>(".msec")?.id ?? MENU[0].id;
-      b.querySelectorAll<HTMLElement>(".msec").forEach(s => { if (s.getBoundingClientRect().top - line <= 0) id = s.id; });
+      const all = [...b.querySelectorAll<HTMLElement>(".msec")].filter(shown); // sections hidden by the filter don't count
+      let id = all[0]?.id ?? MENU[0].id;
+      all.forEach(s => { if (s.getBoundingClientRect().top - line <= 0) id = s.id; });
       setActive(id);
     };
     const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
@@ -357,19 +458,21 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   };
   const cur = Math.max(0, secs.findIndex(s => s.id === active));
 
-  /* restore the saved filter before paint; the html.diet-* class has covered for it until now */
+  /* restore the saved filter before paint (the html.diet-* class from layout.tsx already shows that menu) */
   const restoring = useRef(false);
   useLayoutEffect(() => {
     let saved: string | null = null;
     try { saved = sessionStorage.getItem(DIET_KEY); } catch {}
     if (saved === "v" || saved === "n") { restoring.current = true; setMode(saved); }
   }, []);
-  useLayoutEffect(() => { if (mode !== "all" || !restoring.current) document.documentElement.classList.remove("diet-v", "diet-n"); }, [mode]);
 
   /* diet filter changed: save it, then keep the reader's place (see capture/placeY above) before the browser paints */
   const firstMode = useRef(true);
   useLayoutEffect(() => {
-    if (firstMode.current) { firstMode.current = false; return; }
+    if (firstMode.current) { firstMode.current = false; return; } // the class from layout.tsx is already right
+    const root = document.documentElement;
+    root.classList.toggle("diet-v", mode === "v");
+    root.classList.toggle("diet-n", mode === "n");
     try { mode === "all" ? sessionStorage.removeItem(DIET_KEY) : sessionStorage.setItem(DIET_KEY, mode); } catch {}
     const lenis = window.LD?.lenis;
     lenis?.resize();
@@ -419,10 +522,10 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
 
   /* The ~300 dish rows only change with the filter or review flags, so scrollspy updates and opening the
      section sheet (which re-render this component) don't re-render the whole menu. */
-  const list = useMemo(() => secs.map((sec, i) => (
-    <section key={sec.id} id={sec.id} className="msec" {...DIET_COUNTS.get(sec.id)}>
+  const list = useMemo(() => FILTERED.all.map(sec => (
+    <section key={sec.id} id={sec.id} className="msec" {...DIET_COUNTS.get(sec.id)} style={SEC_PHASE.get(sec.id) as React.CSSProperties}>
       <header className="msec__head">
-        <small><i className="mphase" style={phase(i, secs.length)} aria-hidden="true" />{sec.kicker}</small>
+        <small><i className="mphase" aria-hidden="true" />{sec.kicker}</small>
         <h2>{sec.title}</h2>
         {review && SECTION_FLAGS.has(sec.id) && (
           <p className={pulse === SECTION_FLAGS.get(sec.id) ? "msec__flag pulse" : "msec__flag"}>
@@ -452,7 +555,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         </div>
       ))}
     </section>
-  )), [secs, review, pulse]);
+  )), [review, pulse]); // not the filter: CSS applies that
 
   return (
     <>

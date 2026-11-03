@@ -52,6 +52,8 @@ const jsonLd = {
   telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: `${SITE.url}/img/og-home.jpg`,
   address: { "@type": "PostalAddress", streetAddress: "140/2 Salkia School Road, Opposite Ghasbagan Maidan, near Sansaraa", addressLocality: "Howrah", addressRegion: "West Bengal", postalCode: "711101", addressCountry: "IN" },
   geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
+  // open every day, 11 am to midnight (owner, Nov 2026); 23:59 is the unambiguous way to write midnight here
+  openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], opens: "11:00", closes: "23:59" }],
   hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
 };
 
@@ -245,7 +247,7 @@ export default function Home() {
                 <a href={SITE.maps} target="_blank" rel="noopener"><small>Find us</small><b>{SITE.address}</b><IArrow /></a>
                 <a href={SITE.tel}><small>Reserve</small><b>{SITE.phone}</b><IPhone /></a>
                 <a href={`mailto:${SITE.email}`}><small>Write</small><b>{SITE.email}</b><IMail /></a>
-                <div><small>Hours</small><b>Opens in the afternoon</b><IClock /></div>
+                <div><small>Hours</small><b>Daily, 11 am – midnight</b><IClock /></div>
               </div>
               <div className="socials" data-reveal>
                 <a href={SITE.instagram} target="_blank" rel="noopener" aria-label="Instagram"><IInstagram /></a>

@@ -351,9 +351,9 @@ em,.it{font-style:italic;color:var(--gold)}
 .cats{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 20px;mask-image:linear-gradient(90deg,transparent,#000 var(--fl),#000 calc(100% - var(--fr)),transparent);transition:--fl .3s,--fr .3s}
 /* All / Veg / Non-veg filter */
 .mfilter{position:relative;isolation:isolate;flex:none;display:flex;gap:2px;padding:4px;border-radius:999px;border:1px solid var(--line);background:rgba(244,236,218,.04)}
-.mfilter button{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:14px;color:var(--muted);white-space:nowrap;transition:background .3s,color .3s}
+.mfilter button{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;transition:background .3s,color .3s}
 .mfilter button:hover{color:var(--cream)}
-.mfilter button[aria-pressed=true]{background:var(--gold);color:var(--night);font-weight:500}
+.mfilter button[aria-pressed=true]{background:var(--gold);color:var(--night)}
 /* once MenuBrowser has measured the buttons, a sliding gold pill replaces the pressed button's own fill.
    Moving right, the right edge leads and the left follows a beat later (and the reverse moving left): a squish */
 @property --tl{syntax:"<length>";inherits:false;initial-value:0px}
@@ -364,13 +364,17 @@ em,.it{font-style:italic;color:var(--gold)}
 .mfilter.has-thumb>button[aria-pressed]{background:none}
 /* copies of dishes leaving on a filter switch, squashing out where they were (MenuBrowser) */
 .mghosts{position:fixed;left:0;right:0;bottom:0;z-index:25;overflow:hidden;pointer-events:none;color:var(--ink)}
+.mghosts--back{z-index:-1} /* behind the menu: a card that went away */
+.mghost-card{position:absolute;border-radius:20px;transform-origin:50% 0;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply}
 .mfilter .vg{background:var(--cream)}
-/* a saved Veg / Non-veg filter, applied before first paint (layout.tsx) until React renders the filtered menu */
+/* the Veg / Non-veg filter: html.diet-v / .diet-n (set before first paint by layout.tsx, then by MenuBrowser)
+   hide the other diet. The full menu is rendered once, so switching costs only this class flip */
 .diet-v :is(.msec,.cats>button,.msheet__grid>button)[data-v="0"],.diet-n :is(.msec,.cats>button,.msheet__grid>button)[data-n="0"],
 .diet-v .mgrp[data-t=n],.diet-n .mgrp[data-t=v],.diet-v .msec[data-v="1"] .mgrp>h3,.diet-n .msec[data-n="1"] .mgrp>h3{display:none}
-.diet-v .msec[data-v="1"] .mgrp,.diet-n .msec[data-n="1"] .mgrp{margin-top:0}
-.diet-v .mfilter__all,.diet-n .mfilter__all{background:none;color:var(--muted);font-weight:inherit}
-.diet-v .mfilter__v,.diet-n .mfilter__n{background:var(--gold);color:var(--night);font-weight:500}
+.diet-v .msec[data-v="1"] .mgrp,.diet-n .msec[data-n="1"] .mgrp,.diet-n .mgrp[data-t=v]+.mgrp{margin-top:0} /* groups run veg first, then non-veg */
+.mphase{--p:var(--pa,1)}.diet-v .mphase{--p:var(--pv,1)}.diet-n .mphase{--p:var(--pn,1)} /* each section's moon for the current filter */
+.diet-v .mfilter__all,.diet-n .mfilter__all{background:none;color:var(--muted)}
+.diet-v .mfilter__v,.diet-n .mfilter__n{background:var(--gold);color:var(--night)}
 .cats::-webkit-scrollbar{display:none}
 .cats>button{flex:none;padding:8px 16px;border-radius:999px;font-size:14px;color:var(--muted);white-space:nowrap;transition:color .3s,background .3s}
 .cats>button:first-child{margin-left:auto}
@@ -379,8 +383,10 @@ em,.it{font-style:italic;color:var(--gold)}
 .cats>button.on{color:var(--night);background:var(--cream)}
 
 /* sections */
-.mbody{padding:clamp(18px,3vw,36px) 0 clamp(50px,7vw,90px)}
-.msec{scroll-margin-top:70px;padding:clamp(28px,4vw,56px) clamp(20px,4vw,56px);margin-bottom:clamp(16px,2.4vw,28px);border-radius:20px;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply;color:var(--ink)}
+.mbody{padding:clamp(18px,3vw,36px) 0 clamp(50px,7vw,90px);overflow-anchor:none} /* MenuBrowser keeps the reader's place itself */
+.msec{scroll-margin-top:70px;padding:clamp(28px,4vw,56px) clamp(20px,4vw,56px);margin-bottom:clamp(16px,2.4vw,28px);border-radius:20px;color:var(--ink)}
+/* desktop: each card's paper is its ::before, so a filter switch can stretch or shrink it smoothly (MenuBrowser) */
+@media (min-width:701px){.msec{position:relative;isolation:isolate}.msec::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--paper) url(/img/paper.webp);background-size:500px;background-blend-mode:multiply}}
 .msec__head{text-align:center;margin-bottom:clamp(20px,3vw,32px)}
 .msec__head small{font-size:14px;font-weight:500;color:var(--ember-ink)}
 /* each section's moon: a thin crescent at the first section, full at the last (MenuBrowser sets --p) */
