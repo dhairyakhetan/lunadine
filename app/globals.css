@@ -371,7 +371,7 @@ em,.it{font-style:italic;color:var(--gold)}
    hide the other diet. The full menu is rendered once, so switching costs only this class flip */
 .diet-v :is(.msec,.cats>button,.msheet__grid>button)[data-v="0"],.diet-n :is(.msec,.cats>button,.msheet__grid>button)[data-n="0"],
 .diet-v .mgrp[data-t=n],.diet-n .mgrp[data-t=v],.diet-v .msec[data-v="1"] .mgrp>h3,.diet-n .msec[data-n="1"] .mgrp>h3{display:none}
-.diet-v .msec[data-v="1"] .mgrp,.diet-n .msec[data-n="1"] .mgrp,.diet-n .mgrp[data-t=v]+.mgrp{margin-top:0} /* groups run veg first, then non-veg */
+.diet-v .msec[data-v="1"] .mgrp,.diet-n .msec[data-n="1"] .mgrp,.diet-n .mgrp[data-t=v]+.mgrp{margin-top:0} /* in Non-veg, the first group left can follow a hidden veg one */
 .mphase{--p:var(--pa,1)}.diet-v .mphase{--p:var(--pv,1)}.diet-n .mphase{--p:var(--pn,1)} /* each section's moon for the current filter */
 .diet-v .mfilter__all,.diet-n .mfilter__all{background:none;color:var(--muted)}
 .diet-v .mfilter__v,.diet-n .mfilter__n{background:var(--gold);color:var(--night)}

@@ -86,13 +86,11 @@ export const MENU: MenuSection[] = [
       ["Chicken Kalmi Kabab", 340, "4 pc"], ["Chicken Tangri Kabab", 340, "4 pc"], ["Ajwaini Fish Tikka", 350, "6 pc"],
       ["Fish Hariyali", 360, "6 pc"], ["Pomfret Tandoori", 400, "2 pc"], ["Jhinga Kabab (Prawn)", 400, "8 pc"] ]}
   ]},
-  { id: "biryani", title: "Biryani", kicker: "Slow, sealed, fragrant", groups: [
+  { id: "biryani", title: "Biryani & Pulao", kicker: "Indian main course", groups: [
     { label: "Biryani", t: "n", items: [
       ["Chicken Biryani", 240], ["Chicken Special Biryani", 310], ["Mutton Biryani", 330],
-      ["Mutton Biryani Special", 400], ["Egg Biryani", 200] ]}
-  ]},
-  { id: "indian-rice", title: "Rice & Pulao", kicker: "Indian main course", groups: [
-    { label: "Rice", t: "v", items: [
+      ["Mutton Biryani Special", 400], ["Egg Biryani", 200] ]},
+    { label: "Rice & pulao", t: "v", items: [
       ["Steam Rice", 180], ["Jeera Rice", 200], ["Veg Pulao", 220], ["Peas Pulao", 210],
       ["Paneer Pulao", 220], ["Kashmiri Pulao", 250] ]}
   ]},
