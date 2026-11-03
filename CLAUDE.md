@@ -72,4 +72,5 @@ Owner-supplied claims shown in the menu header: No Ajinomoto, no trans fat, no f
 - Signature-dish descriptions on the home page were written for the site. The owner may revise them.
 
 ## Housekeeping
+- **Git: commit and push straight to `main`.** Don't create or push other branches.
 - Don't commit `node_modules`, `.next`, or `.vercel` (already in `.gitignore`).
