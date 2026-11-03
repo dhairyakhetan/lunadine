@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 /**
  * Page-level scroll effects. Works on whatever markup the current page has:
- * [data-reveal]/.split reveals, pointer glow, video play-on-screen, lazy map, count-up,
+ * [data-reveal]/.split reveals, video play-on-screen, lazy map, count-up,
  * story word highlight + moon phase, mobile dock.
  */
 export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
@@ -11,7 +11,6 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     const d = document, root = d.documentElement;
     if (noIntro) root.classList.add("no-intro");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const fine = matchMedia("(pointer: fine)").matches;
     const cleanups: (() => void)[] = [];
     const on = <K extends keyof WindowEventMap>(t: K, f: (e: WindowEventMap[K]) => void, o?: AddEventListenerOptions) => {
       addEventListener(t, f, o); cleanups.push(() => removeEventListener(t, f));
@@ -22,19 +21,6 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     }), { rootMargin: "0px 0px -12% 0px" });
     d.querySelectorAll("[data-reveal], .split").forEach(el => io.observe(el));
     cleanups.push(() => io.disconnect());
-
-    /* pointer glow */
-    if (fine) {
-      const glow = (e: PointerEvent) => {
-        const el = (e.target as Element).closest?.(".btn, .dish") as HTMLElement | null;
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--mx", e.clientX - r.left + "px");
-        el.style.setProperty("--my", e.clientY - r.top + "px");
-      };
-      d.addEventListener("pointermove", glow, { passive: true });
-      cleanups.push(() => d.removeEventListener("pointermove", glow));
-    }
 
     /* video plays only on screen */
     d.querySelectorAll<HTMLVideoElement>("video[data-auto]").forEach(v => {

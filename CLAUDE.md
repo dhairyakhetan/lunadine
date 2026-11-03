@@ -54,7 +54,9 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 ## Design system
 - **Colours:** night `#080d1b`, navy `#1b2540` (brand), cream `#f4ecda`, paper `#efe5cd` (+ `/img/paper.webp` multiplied), gold `#f3c37c` (from the illuminated signage), ember `#d4694e`. Veg/non-veg marks use the Indian standard green dot / red triangle (`.vg`, `.vg.n`).
 - **Motifs:** arches (`border-radius:999px 999px …`, echoing the restaurant's lit Pichwai arches), the moon, stars, and the deer emblem. Dark night sections alternate with cream "menu card" paper sections.
-- **Motion:** easing `cubic-bezier(.22,1,.36,1)`, ~1.1 s reveals, nothing bouncy.
+- **Motion:** easing `cubic-bezier(.22,1,.36,1)`, ~1.1 s reveals (24px rise), nothing bouncy. Hovers are quick colour changes (~.2 s), never layout properties like padding. The only loops are the marquee and The Room reel. The hero moon, badge, scroll cue and map pin stay still.
+- **Restraint:** no glows (coloured `box-shadow`/`drop-shadow`) or gold radial washes; depth comes from hairlines and neutral shadows. Labels are sentence case at normal tracking, never spaced-out uppercase (the hero's circular seal is the one exception). Gold italic is for one word in a display headline only. Headlines have no trailing period. Spacing is on a 4px grid.
+- **Ember on paper:** `--ember` for display sizes (headline words, prices); `--ember-ink` for small text such as section labels, since plain ember is only 2.8:1 on paper.
 - **Logo:** `components/Brand.tsx` holds paths vector-traced from the printed menu. They use `currentColor`. Don't redraw or restyle the mark.
 
 ## Review mode (menu issues)

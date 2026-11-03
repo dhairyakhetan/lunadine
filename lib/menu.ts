@@ -13,7 +13,7 @@ export const MENU: MenuSection[] = [
     { label: "Veg", t: "v", items: [
       ["Manchow Soup", 140], ["Hot & Sour Soup", 150], ["Sweet Corn Soup", 140],
       ["Veg Noodle Soup", 150], ["Veg Lemon Coriander Soup", 150] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Chicken Manchow Soup", 160], ["Chicken Hot & Sour Soup", 160], ["Chicken Sweet Corn Soup", 160],
       ["Chicken Noodle Soup", 160], ["Chicken Lemon Coriander Soup", 170], ["Thai Soup", 190] ]}
   ]},
@@ -23,7 +23,7 @@ export const MENU: MenuSection[] = [
       ["Chilli Mushroom (Dry)", 280], ["Chilli Paneer (Dry)", 290, "8 pc"], ["Paneer 65", 280],
       ["Paneer Manchurian (Dry)", 270], ["Veg Manchurian (Dry)", 250], ["Schezwan Paneer (Dry)", 280],
       ["Kung Pao Paneer (Dry)", 280] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Chilli Chicken (Dry)", 280, "8 pc"], ["Chicken Manchurian (Dry)", 270, "8 pc"], ["Schezwan Chicken (Dry)", 280, "8 pc"],
       ["Chicken Lollipop", 260, "6 pc"], ["Drums of Heaven", 280, "6 pc"], ["Crispy Chicken", 270],
       ["Dragon Chicken", 290, "8 pc"], ["Kung Pao Chicken (Dry)", 290], ["Fish Finger", 380, "6 pc"],
@@ -35,7 +35,7 @@ export const MENU: MenuSection[] = [
       ["Veg Hakka Noodles", 200], ["Veg Schezwan Noodles", 230], ["Veg Pan Fry Noodles", 250],
       ["Veg Continental Noodles", 240], ["Veg Hong Kong Noodles", 240], ["Veg American Chopsuey", 250],
       ["Chilli Garlic Noodles", 230], ["Burnt Garlic Noodles", 240], ["Veg Thukpa", 250], ["Mei Fun Noodles", 270] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Chicken Hakka Noodles", 250], ["Mix Hakka Noodles", 280], ["Egg Hakka Noodles", 220],
       ["Schezwan Chicken Noodles", 280], ["Schezwan Mix Noodles", 310], ["Schezwan Egg Noodles", 250],
       ["Pan Fry Chicken Noodles", 290], ["Pan Fry Mix Noodles", 320], ["Pan Fry Egg Noodles", 260],
@@ -49,7 +49,7 @@ export const MENU: MenuSection[] = [
       ["Veg Fried Rice", 180], ["Veg Schezwan Rice", 210], ["Veg Hong Kong Fried Rice", 230],
       ["Classic Indo-Chinese Fried Rice", 220], ["Mushroom Fried Rice", 230], ["Moon Fan Fried Rice", 230],
       ["Singapuri Fried Rice", 220], ["Thai Basil Fried Rice", 240], ["Korean Kimchi Fried Rice", 250] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Chicken Fried Rice", 260], ["Egg Fried Rice", 240], ["Mixed Fried Rice", 290],
       ["Chicken Schezwan Rice", 270], ["Egg Schezwan Fried Rice", 250], ["Mix Schezwan Fried Rice", 310],
       ["Chicken Hong Kong Fried Rice", 280], ["Mix Hong Kong Fried Rice", 320],
@@ -72,14 +72,14 @@ export const MENU: MenuSection[] = [
   { id: "momos", title: "Momos", kicker: "Six to a plate", groups: [
     { label: "Veg", t: "v", items: [
       ["Veg Steam Momo", 120, "6 pc"], ["Veg Fry Momo", 130, "6 pc"], ["Veg Pan Fry Momo", 140, "6 pc"] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Chicken Steam Momo", 180, "6 pc"], ["Chicken Fry Momo", 190, "6 pc"], ["Chicken Pan Fry Momo", 210, "6 pc"] ]}
   ]},
   { id: "tandoor", title: "Indian Starters", kicker: "From the tandoor", groups: [
     { label: "Veg", t: "v", items: [
       ["Paneer Tikka", 310, "6 pc"], ["Hariyali Paneer Tikka", 310], ["Paneer Malai Cheese Tikka", 350, "6 pc"],
       ["Hara Bhara Kabab", 260, "6 pc"], ["Tandoori Mushroom", 280] ]},
-    { label: "Non-Veg", t: "n", items: [
+    { label: "Non-veg", t: "n", items: [
       ["Tandoori Chicken — Full", 520], ["Tandoori Chicken — Half", 270], ["Chicken Afghani — Full", 540],
       ["Chicken Afghani — Half", 280], ["Chicken Tikka", 300, "6 pc"], ["Chicken Malai Kabab", 340, "6 pc"],
       ["Chicken Reshmi Kabab", 320, "6 pc"], ["Chicken Seekh Kabab", 280, "6 pc"], ["Chicken Hariyali Kabab", 300, "6 pc"],

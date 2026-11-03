@@ -14,14 +14,14 @@ const MARQUEE = ["Chinese", "Tandoor", "Bengali", "Thai", "Korean", "Biryani", "
 
 const ROOM = [
   { f: "sign-deer", t: "The sign", s: "Salkia School Rd" },
-  { f: "arches", t: "Pichwai arches", s: "Lit from within" },
+  { f: "arches", t: "Pichwai arches", s: "Hand-painted" },
   { f: "moon-wall", t: "The moon wall", s: "Coral & green" },
-  { f: "table-setting", t: "Set & waiting", s: "Every evening" },
+  { f: "table-setting", t: "Set & waiting", s: "Plates down, glasses out" },
   { f: "pendant", t: "Lantern light", s: "Warm, low, golden" },
   { f: "moon-garden", t: "Garden booth", s: "Moss & moon" },
   { f: "pichwai-table", t: "Table for four", s: "Under the art" },
   { f: "arches-wide", t: "The long room", s: "Mustard & marble" },
-  { f: "facade-dusk", t: "Beyond fine dining", s: "See you tonight" },
+  { f: "facade-dusk", t: "Beyond fine dining", s: "Opp. Ghasbagan Maidan" },
 ];
 
 const DISHES: { c: string; t: "v" | "n" | "x"; n: string; p: string; pr: number }[] = [
@@ -68,7 +68,7 @@ export default function Home() {
 
       <Nav
         links={[{ href: "#story", label: "Story" }, { href: "#room", label: "The Room" }, { href: "#signatures", label: "Signatures" }, { href: "#visit", label: "Visit" }]}
-        cta={{ href: "/menu", label: "View Menu" }}
+        cta={{ href: "/menu", label: "View menu" }}
         sheet={[{ href: "#story", label: "Story" }, { href: "#room", label: "The Room" }, { href: "#signatures", label: "Signatures" }, { href: "/menu", label: "Menu" }, { href: "#visit", label: "Visit" }]}
       />
 
@@ -78,10 +78,10 @@ export default function Home() {
           <Sky className="hero__sky" />
           <div className="wrap hero__grid">
             <div className="hero__copy">
-              <span className="kicker reveal-in" style={{ "--d": ".1s" } as React.CSSProperties}>Exotic Multicuisine · Salkia, Howrah</span>
+              <span className="kicker reveal-in" style={{ "--d": ".1s" } as React.CSSProperties}>Exotic multicuisine · Salkia, Howrah</span>
               <h1 className="h-xl">
                 <span className="line"><span style={{ "--d": ".15s" } as React.CSSProperties}>Beyond</span></span>
-                <span className="line"><span style={{ "--d": ".27s" } as React.CSSProperties}><em>fine</em> dining.</span></span>
+                <span className="line"><span style={{ "--d": ".27s" } as React.CSSProperties}><em>fine</em> dining</span></span>
               </h1>
               <p className="lead reveal-in" style={{ "--d": ".5s" } as React.CSSProperties}>
                 Wok-fired Chinese, smoky tandoor, Bengali home classics and Thai–Korean twists — served under one moonlit roof, opposite Ghasbagan Maidan.
@@ -150,9 +150,9 @@ export default function Home() {
           <div className="wrap room__head">
             <div>
               <span className="kicker" data-reveal>The Room</span>
-              <h2 className="h-l split" style={{ marginTop: 20 }}>
+              <h2 className="h-l split" style={{ marginTop: 24 }}>
                 <span className="line"><span>Step inside</span></span>
-                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>glow.</em></span></span>
+                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>glow</em></span></span>
               </h2>
             </div>
             <p data-reveal style={{ "--d": ".15s" } as React.CSSProperties}>
@@ -185,7 +185,7 @@ export default function Home() {
                 <span className="kicker" data-reveal>From the kitchen</span>
                 <h2 className="h-l split">
                   <span className="line"><span>Plates worth</span></span>
-                  <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>detour.</em></span></span>
+                  <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>detour</em></span></span>
                 </h2>
               </div>
               <div className="ornament" data-reveal><Ornament /></div>
@@ -197,7 +197,6 @@ export default function Home() {
                   <h3>{x.n}</h3>
                   <p>{x.p}</p>
                   <span className="dish__price">₹{x.pr}</span>
-                  <span className="dish__n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
                 </article>
               ))}
             </div>
@@ -215,7 +214,7 @@ export default function Home() {
               <span className="kicker" data-reveal>Visit us</span>
               <h2 className="h-l split">
                 <span className="line"><span>Follow the</span></span>
-                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}><em>moonlight.</em></span></span>
+                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}><em>moonlight</em></span></span>
               </h2>
               <div className="info" data-reveal>
                 <a href={SITE.maps} target="_blank" rel="noopener"><small>Find us</small><b>{SITE.address}</b><IArrow /></a>
