@@ -48,7 +48,8 @@ export const viewport: Viewport = {
 };
 
 // Skip the intro animation for returning visitors, reduced-motion users, and any page other than home.
-const introScript = `try{if(location.pathname!=='/'||sessionStorage.getItem('ld-intro')||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('no-intro')}catch(e){}`;
+// On /menu, also apply the saved Veg / Non-veg filter before paint (see MenuBrowser), so a refresh doesn't flash the full menu.
+const introScript = `try{var h=document.documentElement,d=sessionStorage.getItem('ld-diet');if(location.pathname!=='/'||sessionStorage.getItem('ld-intro')||matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('no-intro');if(location.pathname==='/menu'&&(d==='v'||d==='n'))h.classList.add('diet-'+d)}catch(e){}`;
 
 const noScriptCss = "[data-reveal],.split .line>span{opacity:1!important;transform:none!important}.story__text .w{opacity:1}";
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MENU, type Diet } from "@/lib/menu";
 import { MENU_ISSUES } from "@/lib/menu-issues";
 import { IAlert, IClose, IUp } from "./Icons";
@@ -34,6 +34,15 @@ const filterMenu = (mode: Mode) => MENU
     count: s.groups.reduce((n, g) => n + g.items.length, 0),
     veg: s.groups.some(g => g.t === "v"), non: s.groups.some(g => g.t === "n"),
   }));
+
+/* The chosen filter is remembered for the tab (sessionStorage), so a refresh or Back keeps it. layout.tsx
+   reads it before first paint and sets html.diet-v / .diet-n; globals.css then hides the other diet's groups
+   (via these data-v / data-n counts) until React renders the filtered menu, so there's no flash or jump. */
+const DIET_KEY = "ld-diet";
+const DIET_COUNTS = new Map(MENU.map(s => [s.id, {
+  "data-v": s.groups.filter(g => g.t !== "n").length, // groups left under Veg
+  "data-n": s.groups.filter(g => g.t !== "v").length, // groups left under Non-veg
+}]));
 
 /** Page Y of an element from layout (offsetTop chain), unaffected by transforms. */
 const docTop = (el: HTMLElement) => {
@@ -94,10 +103,28 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     return () => { removeEventListener("scroll", req); removeEventListener("resize", req); };
   }, []);
 
+  /* chips row: fade an edge only while there are more chips hidden past it (so at the start, the first chip sits clean) */
+  useEffect(() => {
+    const c = chips.current;
+    if (!c) return;
+    const upd = () => {
+      const max = c.scrollWidth - c.clientWidth;
+      c.style.setProperty("--fl", c.scrollLeft > 2 ? "28px" : "0px");
+      c.style.setProperty("--fr", c.scrollLeft < max - 2 ? "28px" : "0px");
+    };
+    upd();
+    c.addEventListener("scroll", upd, { passive: true });
+    addEventListener("resize", upd, { passive: true });
+    return () => { c.removeEventListener("scroll", upd); removeEventListener("resize", upd); };
+  }, [secs]);
+
   /* keep the active chip in view */
   useEffect(() => {
     const c = chips.current, a = c?.querySelector<HTMLElement>(`[data-id="${active}"]`);
-    if (c && a) c.scrollTo({ left: a.offsetLeft - c.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" });
+    if (!c || !a) return;
+    // measured against the row itself (offsetLeft would count from the sticky bar and include the filter's width)
+    const cr = c.getBoundingClientRect(), ar = a.getBoundingClientRect();
+    c.scrollTo({ left: c.scrollLeft + ar.left - cr.left - (cr.width - ar.width) / 2, behavior: "smooth" });
   }, [active]);
 
   /* phone section sheet: lock the page behind it, close on Escape, move focus in and back out */
@@ -163,12 +190,23 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   };
   const cur = Math.max(0, secs.findIndex(s => s.id === active));
 
+  /* restore the saved filter before paint; the html.diet-* class has covered for it until now */
+  const restoring = useRef(false);
+  useLayoutEffect(() => {
+    let saved: string | null = null;
+    try { saved = sessionStorage.getItem(DIET_KEY); } catch {}
+    if (saved === "v" || saved === "n") { restoring.current = true; setMode(saved); }
+  }, []);
+  useLayoutEffect(() => { if (mode !== "all" || !restoring.current) document.documentElement.classList.remove("diet-v", "diet-n"); }, [mode]);
+
   /* diet filter changed: the list above you may have changed, so go back to the start of the menu */
   const firstMode = useRef(true);
   useEffect(() => {
     if (firstMode.current) { firstMode.current = false; return; }
+    try { mode === "all" ? sessionStorage.removeItem(DIET_KEY) : sessionStorage.setItem(DIET_KEY, mode); } catch {}
     const lenis = window.LD?.lenis;
     lenis?.resize();
+    if (restoring.current) { restoring.current = false; dispatchEvent(new Event("scroll")); return; } // a refresh: stay put
     const b = body.current?.parentElement; // .mbody
     if (b) {
       const start = Math.max(0, docTop(b) - barH());
@@ -210,7 +248,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   /* The ~300 dish rows only change with the filter or review flags, so scrollspy updates and opening the
      section sheet (which re-render this component) don't re-render the whole menu. */
   const list = useMemo(() => secs.map(sec => (
-    <section key={sec.id} id={sec.id} className="msec">
+    <section key={sec.id} id={sec.id} className="msec" {...DIET_COUNTS.get(sec.id)}>
       <header className="msec__head">
         <small>{sec.kicker}</small>
         <h2>{sec.title}</h2>
@@ -221,7 +259,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         )}
       </header>
       {sec.groups.map(g => (
-        <div className="mgrp" key={g.label}>
+        <div className="mgrp" key={g.label} data-t={g.t}>
           {sec.groups.length > 1 && <h3><Veg t={g.t} quiet />{g.label}</h3>}
           <ul className="items">
             {g.items.map(([n, p, note]) => {
@@ -256,7 +294,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         </div>
         <nav className="cats" ref={chips} aria-label="Menu sections">
           {secs.map(s => (
-            <button type="button" key={s.id} data-id={s.id} className={active === s.id ? "on" : undefined} aria-current={active === s.id ? "true" : undefined}
+            <button type="button" key={s.id} data-id={s.id} {...DIET_COUNTS.get(s.id)} className={active === s.id ? "on" : undefined} aria-current={active === s.id ? "true" : undefined}
               onClick={() => scrollUnderBar(document.getElementById(s.id))}>
               {s.title}
             </button>
@@ -293,7 +331,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
         </div>
         <div className="msheet__grid">
           {secs.map(s => (
-            <button type="button" key={s.id} className={s.id === active ? "on" : undefined} aria-current={s.id === active ? "true" : undefined} onClick={() => jump(s.id)}>
+            <button type="button" key={s.id} {...DIET_COUNTS.get(s.id)} className={s.id === active ? "on" : undefined} aria-current={s.id === active ? "true" : undefined} onClick={() => jump(s.id)}>
               <b>{s.title}</b>
               <span>{s.veg && <i className="vg" />}{s.non && <i className="vg n" />}{s.count} {s.count === 1 ? "dish" : "dishes"}</span>
             </button>
