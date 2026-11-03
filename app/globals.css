@@ -129,12 +129,6 @@ em,.it{font-style:italic;color:var(--gold)}
 .hero__arch{position:relative;opacity:0;transform:translateY(60px) scale(.96);animation:fadeUp 1.4s var(--ease) forwards;animation-delay:calc(var(--intro) + .15s)}
 .hero__moon{position:absolute;z-index:-1;top:-32px;left:-32px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6df,#f3c37c 55%,#c98a3c);box-shadow:0 0 72px 8px rgba(243,195,124,.22),inset -14px -10px 24px rgba(0,0,0,.25);animation:moonrise 2.6s var(--ease) both;animation-delay:calc(var(--intro) + .6s)}
 @keyframes moonrise{from{transform:translate(96px,180px)}}
-.hero__badge{position:absolute;left:-56px;bottom:48px;width:132px;height:132px;border-radius:50%;background:radial-gradient(circle,#121b36 0%,var(--night) 70%);box-shadow:0 0 0 1px rgba(243,195,124,.45),0 0 0 7px var(--night),0 0 0 8px rgba(243,195,124,.18),0 20px 50px -10px rgba(0,0,0,.8);color:var(--gold);z-index:2}
-.hero__badge>svg:first-child{position:absolute;inset:8px;width:calc(100% - 16px)!important;height:calc(100% - 16px)!important}
-.hero__badge text{font-family:var(--sans);font-size:9px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;fill:currentColor}
-.hero__badge svg.c{position:absolute;inset:0;margin:auto;width:34px;height:auto;color:var(--cream)}
-.scroll-cue{position:absolute;left:50%;bottom:24px;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.scroll-cue i{width:1px;height:48px;background:linear-gradient(transparent,var(--gold))}
 
 @media (max-width:860px){
   .hero{padding:0;align-items:end;min-height:100svh}
@@ -143,11 +137,10 @@ em,.it{font-style:italic;color:var(--gold)}
   .hero__arch .arch{max-width:none;height:100%;aspect-ratio:auto;border-radius:0;padding:0;background:none;box-shadow:none}
   .hero__arch .arch__in{border-radius:0}
   .hero__arch .arch__in::after{background:linear-gradient(180deg,rgba(8,13,27,.6) 0%,rgba(8,13,27,.25) 22%,rgba(8,13,27,.72) 42%,rgba(8,13,27,.9) 64%,var(--night) 96%)}
-  .hero__moon,.hero__badge{display:none}
+  .hero__moon{display:none}
   .hero__sky{display:none} /* covered by the full-bleed video; hidden so it doesn't animate unseen */
   .hero__copy{padding:0 0 112px}
   .hero .h-xl{font-size:clamp(60px,17vw,96px)}
-  .scroll-cue{display:none}
 }
 @keyframes fadeIn{to{opacity:1;transform:none}}
 
