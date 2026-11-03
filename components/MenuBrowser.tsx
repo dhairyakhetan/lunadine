@@ -64,6 +64,9 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const secs = useMemo(() => filterMenu(mode), [mode]);
 
   const bar = useRef<HTMLDivElement>(null);
+  const filt = useRef<HTMLDivElement>(null);
+  const thumb = useRef<HTMLSpanElement>(null);
+  const [thumbOn, setThumbOn] = useState(false);
   const chips = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const issuesBox = useRef<HTMLDivElement>(null);
@@ -123,8 +126,127 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
     const near = [...ids.slice(i + 1), ...ids.slice(0, Math.max(0, i)).reverse()].map(id => document.getElementById(id)).find(Boolean);
     return near ? underBarY(near) : null;
   };
+  /* The switch animates (unless reduced motion): what stays glides from where it was to where it lands, what
+     leaves squashes flat and fades (a copy of it, since React has already removed it), and what arrives springs up
+     line by line with its veg / non-veg mark popping in. Only what's on screen moves, with transform and opacity
+     through the Web Animations API, so React's classes are never touched (gotcha 1). */
+  const MOVERS = "li[data-k], .mgrp > h3, .msec__head";
+  const keyOf = (el: HTMLElement) =>
+    el.tagName === "LI" ? el.dataset.k! : el.tagName === "H3" ? `g|${el.closest(".msec")?.id}|${el.textContent}` : `s|${el.closest(".msec")?.id}`;
+  /** Top of the part of the screen where dishes scroll: under the bar, and on phones under the stuck section title. */
+  const readingLine = () => {
+    let line = Math.max(0, bar.current?.getBoundingClientRect().bottom ?? 0);
+    if (matchMedia("(max-width:700px)").matches) {
+      const stuck = [...(body.current?.querySelectorAll<HTMLElement>(".msec__head") ?? [])].find(h => { const r = h.getBoundingClientRect(); return r.top <= line + 1 && r.bottom > line; });
+      if (stuck) line = stuck.getBoundingClientRect().bottom;
+    }
+    return line;
+  };
+  type Snap = { pos: Map<string, { x: number; y: number }>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number };
+  const snap = useRef<Snap | null>(null);
+  const ghosts = useRef<HTMLElement | null>(null);
+  const SQUISH = "cubic-bezier(.34,1.42,.64,1)"; // a little overshoot: the squish
+  const snapshot = (): Snap | null => {
+    const b = body.current;
+    if (!b || matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    b.getAnimations({ subtree: true }).forEach(a => a.finish()); // a quick second tap: start from where things settle
+    const line = readingLine(), barBottom = bar.current?.getBoundingClientRect().bottom ?? 0;
+    const pos = new Map<string, { x: number; y: number }>(), seen: Snap["seen"] = [];
+    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (el.classList.contains("msec__head") && r.top <= barBottom + 1) return; // a stuck title stays put
+      const k = keyOf(el);
+      pos.set(k, { x: r.left, y: r.top });
+      if (r.bottom > line && r.top < innerHeight) seen.push({ k, el, r });
+    });
+    return { pos, seen, line };
+  };
+  const animateSwitch = (sn: Snap) => {
+    const b = body.current;
+    if (!b) return;
+    const line = readingLine(), barBottom = bar.current?.getBoundingClientRect().bottom ?? 0, vh = innerHeight;
+    const now = new Set<string>();
+    let n = 0;
+    b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => {
+      const k = keyOf(el);
+      now.add(k);
+      const r = el.getBoundingClientRect();
+      if (r.bottom < line - 40 || r.top > vh) return;
+      if (el.classList.contains("msec__head") && r.top <= barBottom + 1) return;
+      const o = sn.pos.get(k);
+      if (o && Math.abs(o.y - r.top) < vh) {
+        const dx = o.x - r.left, dy = o.y - r.top;
+        if (Math.abs(dx) + Math.abs(dy) < 1) return;
+        el.animate([
+          { transform: `translate(${dx}px,${dy}px) scale(1,.92)` },
+          { transform: "translate(0,0) scale(1,1.04)", offset: 0.7 },
+          { transform: "none" },
+        ], { duration: 560, delay: 80, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" }); // after the leavers have mostly gone
+      } else {
+        const delay = 100 + Math.min(n++ * 28, 280), from = { transformOrigin: "0 50%" };
+        el.animate([
+          { ...from, opacity: 0, transform: "translateY(12px) scale(.94,.4)" },
+          { ...from, opacity: 1, transform: "scale(1.01,1.08)", offset: 0.55 },
+          { ...from, opacity: 1, transform: "none" },
+        ], { duration: 520, delay, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" });
+        el.querySelectorAll<HTMLElement>(":scope > .vg").forEach(v => v.animate(
+          [{ transform: "scale(0)" }, { transform: "scale(1.35)", offset: 0.6 }, { transform: "none" }],
+          { duration: 480, delay: delay + 80, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" }));
+      }
+    });
+    // what left: animate a copy where it was, in a layer clipped to the reading area (so it never covers the bar)
+    const gone = sn.seen.filter(g => !now.has(g.k));
+    ghosts.current?.remove();
+    if (!gone.length) return;
+    const layer = document.createElement("div");
+    layer.className = "mghosts";
+    layer.style.top = sn.line + "px";
+    gone.forEach((g, i) => {
+      const wrap = document.createElement(g.el.tagName === "LI" ? "ul" : "div");
+      wrap.className = g.el.tagName === "LI" ? "items" : g.el.tagName === "H3" ? "mgrp" : "";
+      wrap.style.cssText = `position:absolute;left:${g.r.left}px;top:${g.r.top - sn.line}px;width:${g.r.width}px;margin:0;padding:0;columns:auto`;
+      const c = g.el.cloneNode(true) as HTMLElement;
+      if (c.classList.contains("msec__head")) c.style.position = "static";
+      wrap.appendChild(c);
+      layer.appendChild(wrap);
+      c.animate([
+        { opacity: 1, transform: "none", transformOrigin: "0 50%" },
+        { opacity: 0, transform: "scale(.97,.25)", transformOrigin: "0 50%" },
+      ], { duration: 200, delay: Math.min(i * 8, 48), easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
+    });
+    document.body.appendChild(layer);
+    ghosts.current = layer;
+    setTimeout(() => { layer.remove(); if (ghosts.current === layer) ghosts.current = null; }, 400);
+  };
+
+  /* the gold pill behind the pressed filter button slides over: its leading edge first, the trailing edge catching
+     up, so it stretches and settles (two @property lengths with different timings, see globals.css) */
+  const placeThumb = (animate: boolean) => {
+    const g = filt.current, t = thumb.current, btn = g?.querySelector<HTMLElement>('button[aria-pressed="true"]');
+    if (!g || !t || !btn) return;
+    const l = btn.offsetLeft, r = g.clientWidth - l - btn.offsetWidth;
+    t.dataset.dir = l >= (parseFloat(t.style.getPropertyValue("--tl")) || 0) ? "r" : "l";
+    if (!animate) t.style.transition = "none";
+    t.style.setProperty("--tl", l + "px");
+    t.style.setProperty("--tr", r + "px");
+    if (!animate) { void t.offsetWidth; t.style.transition = ""; return; }
+    btn.querySelector(".vg")?.animate([{ transform: "scale(1)" }, { transform: "scale(.6,1.3)", offset: 0.35 }, { transform: "scale(1.2)", offset: 0.7 }, { transform: "none" }], { duration: 480, easing: "ease-out" });
+  };
+  const thumbPlaced = useRef(false);
+  useLayoutEffect(() => {
+    placeThumb(thumbPlaced.current && !matchMedia("(prefers-reduced-motion: reduce)").matches);
+    thumbPlaced.current = true;
+    setThumbOn(true);
+  }, [mode]);
+  useEffect(() => {
+    const onResize = () => placeThumb(false);
+    addEventListener("resize", onResize, { passive: true });
+    return () => { removeEventListener("resize", onResize); ghosts.current?.remove(); };
+  }, []);
+
   const switchMode = (m: Mode) => {
     if (m === mode) return;
+    snap.current = snapshot();
     anchor.current = capture();
     setMode(m);
   };
@@ -259,6 +381,9 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       const top = Math.max(0, Math.round(y));
       lenis ? lenis.scrollTo(top, { immediate: true, force: true }) : window.scrollTo(0, top);
     }
+    const sn = snap.current;
+    snap.current = null;
+    if (sn) animateSwitch(sn); // after the scroll is restored, so old and new places are both screen positions
     dispatchEvent(new Event("scroll"));
   }, [mode]);
 
@@ -332,7 +457,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   return (
     <>
       <div className="mtools" ref={bar}>
-        <div className="mfilter" role="group" aria-label="Show dishes">
+        <div className={thumbOn ? "mfilter has-thumb" : "mfilter"} role="group" aria-label="Show dishes" ref={filt}>
+          <span className="mfilter__thumb" ref={thumb} aria-hidden="true" />
           {MODES.map(([m, label]) => (
             <button type="button" key={m} aria-pressed={mode === m} className={`mfilter__${m}`} onClick={() => switchMode(m)}>
               {m === "v" && <i className="vg" />}{m === "n" && <i className="vg n" />}{label}
