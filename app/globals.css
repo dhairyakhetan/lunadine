@@ -254,19 +254,52 @@ em,.it{font-style:italic;color:var(--gold)}
 .sig__promise .sig__veg svg{color:var(--veg)}
 @media (max-width:860px){.sig__head{grid-template-columns:1fr;align-items:start}.sig__aside{width:min(440px,100%);justify-self:start}.sig__aside .ornament{display:none}}
 .dishes{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(27,37,64,.18)}
-.dish{position:relative;padding:clamp(24px,2.5vw,40px) clamp(20px,2vw,32px) clamp(28px,3vw,44px);border-bottom:1px solid rgba(27,37,64,.18);display:flex;flex-direction:column;gap:12px;min-height:280px;isolation:isolate;transition:color .3s var(--ease)}
+/* A signature dish card. Lit (hover with a real pointer; on touch screens, the card passing the middle of the
+   screen, set by PageFX): night rises from the bottom as an arch and opens to fill the card, a moon rises into the
+   empty corner with a few stars, and the name lights up letter by letter with a small lift, the price turning
+   gold. Clip-path, transform, opacity and colour only. */
+.dish{position:relative;padding:clamp(24px,2.5vw,40px) clamp(20px,2vw,32px) clamp(28px,3vw,44px);border-bottom:1px solid rgba(27,37,64,.18);display:flex;flex-direction:column;gap:12px;min-height:280px;isolation:isolate;overflow:hidden;transition:color .3s var(--ease)}
 .dish:not(:nth-child(3n)){border-right:1px solid rgba(27,37,64,.18)}
-.dish::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--navy);opacity:0;transition:opacity .3s var(--ease)}
+.dish::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--navy);clip-path:inset(100% 18% 0 18% round 999px 999px 0 0);transition:clip-path .8s var(--ease)} /* lit: the same arch, grown past the card so its curve clears the top corners */
+.dish__sky{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .6s var(--ease) .15s;
+  background:radial-gradient(1.4px 1.4px at 14% 22%,#f4ecda,transparent),radial-gradient(1px 1px at 38% 12%,rgba(244,236,218,.8),transparent),radial-gradient(1.2px 1.2px at 63% 30%,rgba(244,236,218,.7),transparent),radial-gradient(1px 1px at 82% 16%,#f4ecda,transparent),radial-gradient(1.6px 1.6px at 71% 54%,rgba(243,195,124,.85),transparent),radial-gradient(1px 1px at 52% 70%,rgba(244,236,218,.6),transparent),radial-gradient(1.2px 1.2px at 92% 40%,rgba(244,236,218,.7),transparent)}
+.dish__moon{position:absolute;right:clamp(20px,2vw,32px);bottom:clamp(24px,2.5vw,36px);width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6df,#f3c37c 55%,#c98a3c);box-shadow:0 0 56px 8px rgba(243,195,124,.22),inset -10px -8px 18px rgba(0,0,0,.25);opacity:0;transform:translateY(150%) scale(.7);transition:transform .9s var(--ease) .1s,opacity .5s var(--ease) .1s}
+.dish h3 .dl-w{display:inline-block;white-space:nowrap}
+.dish h3 .dl{display:inline-block;transition:color .35s var(--ease)} /* lit: each letter after the one before */
+@keyframes dlWave{40%{transform:translateY(-.12em)}}
+/* lit; leaving, everything goes back at once (the delays are only on the way in) */
 @media (hover:hover){
-  .dish:hover{color:var(--cream)}
-  .dish:hover::before{opacity:1}
-  .dish:hover .dish__price{color:var(--gold)}
-  .dish:hover .vg{background:var(--cream)}
+  .dishes .dish:hover{color:var(--cream);transition:color .35s var(--ease) .2s}
+  .dishes .dish:hover::before{clip-path:inset(-45% -45% 0 -45% round 999px 999px 0 0)}
+  .dishes .dish:hover .dish__sky{opacity:1}
+  .dishes .dish:hover .dish__moon{opacity:1;transform:none}
+  .dishes .dish:hover .dish__price{color:var(--gold);transition-delay:.3s}
+  .dishes .dish:hover .vg{background:var(--cream)}
+  .dishes .dish:hover .dl{transition-delay:calc(.2s + var(--i) * 22ms);animation:dlWave .7s var(--ease) calc(.2s + var(--i) * 22ms) both}
 }
+.dishes .dish.is-lit{color:var(--cream);transition:color .35s var(--ease) .2s}
+.dishes .dish.is-lit::before{clip-path:inset(-45% -45% 0 -45% round 999px 999px 0 0)}
+.dishes .dish.is-lit .dish__sky{opacity:1}
+.dishes .dish.is-lit .dish__moon{opacity:1;transform:none}
+.dishes .dish.is-lit .dish__price{color:var(--gold);transition-delay:.3s}
+.dishes .dish.is-lit .vg{background:var(--cream)}
+.dishes .dish.is-lit .dl{transition-delay:calc(.2s + var(--i) * 22ms);animation:dlWave .7s var(--ease) calc(.2s + var(--i) * 22ms) both}
 .dish__top{display:flex;justify-content:space-between;align-items:center;font-size:14px;opacity:.72}
 .dish h3{font-family:var(--serif);font-weight:400;font-size:clamp(30px,2.7vw,44px);line-height:1;margin:auto 0 0}
 .dish p{margin:0;font-size:15px;opacity:.75;max-width:34ch}
 .dish__price{font-family:var(--serif);font-size:24px;color:var(--ember);transition:color .3s}
+/* entrance: the cards are dealt onto the table, flipping up into place one after another as the grid scrolls in */
+.dishes{perspective:1600px}
+[data-reveal].dish{transform:rotateX(-72deg) translateY(24px);transform-origin:50% 0;transition:opacity .8s var(--ease) var(--d,0s),transform 1.2s var(--ease) var(--d,0s),color .3s var(--ease)}
+[data-reveal].dish.is-in{transform:none}
+/* "detour": a winding road draws itself under the word, with a little moon at its end */
+.split .line.line--road{padding-bottom:.5em;margin-bottom:-.44em} /* room for the road under "detour" (beats .split .line below) */
+.detour{position:relative;display:inline-block}
+.detour__road{position:absolute;left:2%;bottom:-.44em;width:104%;height:.3em;overflow:visible}
+.detour__road path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.4s var(--ease) 1s}
+.detour__road circle{fill:var(--gold);stroke:var(--navy);stroke-width:1.5;vector-effect:non-scaling-stroke;transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform .6s var(--ease) 2.2s}
+.split.is-in .detour__road path{stroke-dashoffset:0}
+.split.is-in .detour__road circle{transform:none}
 .vg{display:inline-grid;place-items:center;width:13px;height:13px;border:1.5px solid var(--veg);border-radius:2px;vertical-align:-1px;flex:none}
 .vg::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--veg)}
 .vg.n{border-color:var(--nonveg)}
@@ -525,6 +558,7 @@ html:not(.diet-v):not(.diet-n) .tm[data-m=all],.diet-v .tm[data-m=v],.diet-n .tm
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   [data-reveal],.split .line>span,.reveal-in,.hero h1 .line>span,.hero__arch{opacity:1!important;transform:none!important}
   .story__text .w{opacity:1}
+  .detour__road path{stroke-dashoffset:0}.detour__road circle{transform:none}
 }
 .ornament svg{width:100%;height:auto}
 

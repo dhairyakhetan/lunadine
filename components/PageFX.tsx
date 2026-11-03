@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 /**
  * Page-level scroll effects. Works on whatever markup the current page has:
- * [data-reveal]/.split reveals, video play-on-screen, lazy map, count-up,
+ * [data-reveal]/.split reveals, signature dishes lighting up on touch screens, video play-on-screen, lazy map, count-up,
  * story word highlight + moon phase, The Room "step inside" arches, mobile dock.
  */
 export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
@@ -22,6 +22,14 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     }), { rootMargin: "0px 0px -12% 0px" });
     d.querySelectorAll("[data-reveal], .split").forEach(el => io.observe(el));
     cleanups.push(() => io.disconnect());
+
+    /* touch screens have no hover: the signature dish passing through the middle of the screen lights up instead */
+    if (matchMedia("(hover: none)").matches) {
+      const lit = new IntersectionObserver(es => es.forEach(en => en.target.classList.toggle("is-lit", en.isIntersecting)),
+        { rootMargin: "-42% 0px -42% 0px" });
+      d.querySelectorAll(".dish").forEach(el => lit.observe(el));
+      cleanups.push(() => lit.disconnect());
+    }
 
     /* video plays only on screen */
     d.querySelectorAll<HTMLVideoElement>("video[data-auto]").forEach(v => {

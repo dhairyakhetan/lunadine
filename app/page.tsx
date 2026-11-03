@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { preload } from "react-dom";
@@ -55,6 +56,22 @@ const jsonLd = {
   // open every day, 11 am to midnight (owner, Nov 2026); 23:59 is the unambiguous way to write midnight here
   openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], opens: "11:00", closes: "23:59" }],
   hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
+};
+
+/** A dish name split into letters (each with its index as --i), so they can light up and lift one after another.
+ *  Words stay unbreakable; screen readers get the plain name from an sr-only copy. */
+const Letters = ({ text }: { text: string }) => {
+  let i = 0;
+  return (
+    <span className="dl-name" aria-hidden="true">
+      {text.split(" ").map((w, wi) => (
+        <Fragment key={wi}>
+          {wi > 0 && " "}
+          <span className="dl-w">{[...w].map(ch => <span className="dl" key={i} style={{ "--i": i++ } as React.CSSProperties}>{ch}</span>)}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
 };
 
 const Veg = ({ t }: { t: "v" | "n" | "x" }) =>
@@ -203,7 +220,7 @@ export default function Home() {
                 <span className="kicker" data-reveal>From the kitchen</span>
                 <h2 className="h-l split">
                   <span className="line"><span>Plates worth</span></span>
-                  <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em>detour</em></span></span>
+                  <span className="line line--road"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
                 </h2>
               </div>
               <div className="sig__aside" data-reveal style={{ "--d": ".1s" } as React.CSSProperties}>
@@ -219,9 +236,10 @@ export default function Home() {
             </div>
             <div className="dishes">
               {DISHES.map((x, i) => (
-                <article className="dish" data-reveal style={{ "--d": `${(i % 3) * 0.08}s` } as React.CSSProperties} key={x.n}>
+                <article className="dish" data-reveal style={{ "--d": `${(i % 3) * 0.09}s` } as React.CSSProperties} key={x.n}>
+                  <span className="dish__sky" aria-hidden="true"><i className="dish__moon" /></span>
                   <div className="dish__top"><span>{x.c}</span><Veg t={x.t} /></div>
-                  <h3>{x.n}</h3>
+                  <h3><span className="sr-only">{x.n}</span><Letters text={x.n} /></h3>
                   <p>{x.p}</p>
                   <span className="dish__price">₹{x.pr}</span>
                 </article>
