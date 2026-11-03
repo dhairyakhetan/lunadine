@@ -145,10 +145,30 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       const hit = a.keys.map(k => rows.get(k)).find(Boolean);
       return hit ? docTop(hit) - a.top : underBarY(sec);
     }
+    // the section is filtered out: go to the nearest one that's left, in either direction (the one after wins a
+    // tie). Not simply "the next one": that walks you further down the menu with every switch.
     const ids = MENU.map(s => s.id), i = ids.indexOf(a.sec);
-    const near = [...ids.slice(i + 1), ...ids.slice(0, Math.max(0, i)).reverse()].map(id => document.getElementById(id)).find(el => el && shown(el));
+    let near: HTMLElement | null = null, best = Infinity;
+    ids.forEach((id, j) => {
+      const el = document.getElementById(id), dist = Math.abs(j - i) - (j > i ? 0.5 : 0);
+      if (j !== i && el && shown(el) && dist < best) { best = dist; near = el; }
+    });
     return near ? underBarY(near) : null;
   };
+  /* Where you were reading before a run of switches. Switching back and forth without scrolling keeps placing from
+     this, not from wherever the last switch had to put you, so a round trip always comes back to the same dish
+     (Non-veg -> Veg -> Non-veg lands exactly where you started). It's forgotten as soon as you scroll yourself, or
+     the window resizes. Scrolls in the moment after a switch are ours (placing, or the smooth scroller settling a
+     clamped position at the end of the page) and don't count. */
+  const home = useRef<Anchor | null>(null);
+  const ourScrollUntil = useRef(0);
+  useEffect(() => {
+    const forget = () => { if (performance.now() > ourScrollUntil.current) home.current = null; };
+    const resize = () => { home.current = null; };
+    addEventListener("scroll", forget, { passive: true });
+    addEventListener("resize", resize, { passive: true });
+    return () => { removeEventListener("scroll", forget); removeEventListener("resize", resize); };
+  }, []);
 
   /* The switch animates (unless reduced motion). Everything on screen before or after takes part:
      - what stays glides from where it was to where it lands, also when that's off screen, so nothing just vanishes;
@@ -428,7 +448,7 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
 
   const switchMode = (m: Mode) => {
     if (m === mode) return;
-    anchor.current = capture(); // first: it reads where things are on screen, before running animations are dropped
+    anchor.current = home.current ?? capture(); // capture first: it reads where things are on screen, before running animations are dropped
     snap.current = snapshot();
     // copies still fading from a quick earlier tap stay where they are on screen: the re-anchoring scroll that's
     // about to happen keeps the menu in place on screen too, so they mustn't follow it
@@ -648,6 +668,8 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
       const top = Math.max(0, Math.round(y));
       lenis ? lenis.scrollTo(top, { immediate: true, force: true }) : window.scrollTo(0, top);
     }
+    home.current = a; // remembered until the reader scrolls
+    ourScrollUntil.current = performance.now() + 400;
     // the section you're in now, and its chip centred at once, so the chip animation glides it straight there
     const id = spyId();
     setActive(id);
