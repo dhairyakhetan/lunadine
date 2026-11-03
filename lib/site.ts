@@ -1,14 +1,13 @@
-/* Absolute site URL for Open Graph images, the sitemap and structured data.
-   On Vercel it comes from the project's production domain at build time (VERCEL_PROJECT_PRODUCTION_URL,
-   e.g. luna-dine.vercel.app, or the custom domain once one is set as production), so share previews always
-   point at the live site. The fallback is only for local builds.
-   Server-only: client components don't get this env var, so pass values down as props (see MenuBrowser). */
-const PROD_HOST = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+/* The live site address. Used for Open Graph images, og:url, the sitemap, robots.txt and structured data,
+   and as the host where review mode stays hidden (see MenuBrowser). Set explicitly rather than read from
+   Vercel's env, because with several domains attached Vercel can report an old one.
+   Change it here if the domain changes (e.g. a custom domain), then redeploy. */
+const PROD_URL = "https://luna-dine.vercel.app";
 
 export const SITE = {
   name: "Luna Dine",
   tagline: "Beyond Fine Dining",
-  url: PROD_HOST ? `https://${PROD_HOST}` : "https://lunadine.vercel.app",
+  url: PROD_URL,
   phone: "+91 74397 24362",
   tel: "tel:+917439724362",
   whatsapp: "https://wa.me/917439724362",

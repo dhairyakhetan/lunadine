@@ -27,7 +27,7 @@ There is no lint step and no test suite. To verify, run `npm run build`, then ch
 | Path | What |
 |---|---|
 | `lib/menu.ts` | **Source of truth for the menu.** `MENU` array of sections → groups → items `[name, price, note?]`. `t`: `"v"` veg, `"n"` non-veg, `"x"` neutral (drinks). `TOTAL_DISHES` and `TOTAL_SECTIONS` are derived from it, so don't hardcode counts anywhere. |
-| `lib/site.ts` | Phone, email, address, map links, socials, and `url`. `url` comes from Vercel's `VERCEL_PROJECT_PRODUCTION_URL` at build time, so OG images, the sitemap and JSON-LD always use the live domain. It's server-only, so pass values to client components as props. |
+| `lib/site.ts` | Phone, email, address, map links, socials, and `url` (**`https://luna-dine.vercel.app`**). `url` drives OG images, the sitemap and JSON-LD, and review mode stays hidden on that host. Change it if the domain changes, then redeploy. |
 | `app/layout.tsx` | Fonts, metadata/OG, the inline intro-skip script, `<SmoothScroll/>` |
 | `app/page.tsx` | Home: intro → hero (starfield + arch video) → marquee → story (moon + word lighting) → "The Room" horizontal gallery → signature dishes → visit/map → footer + mobile dock. Also holds the JSON-LD `Restaurant` schema. |
 | `app/menu/page.tsx` + `components/MenuBrowser.tsx` | QR menu: small header (logo, kitchen promise), then a client component with sticky section chips (scrollspy) and the menu sections. Review mode lives here too. |
