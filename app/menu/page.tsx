@@ -4,6 +4,7 @@ import MenuBrowser from "@/components/MenuBrowser";
 import { Emblem, Wordmark } from "@/components/Brand";
 import { KitchenPromise } from "@/components/Chrome";
 import { SITE } from "@/lib/site";
+import ogMenu from "@/assets/img/og-menu.jpg";
 
 export const metadata: Metadata = {
   title: "Menu — Chinese, Tandoor, Bengali, Thai & Korean in Salkia, Howrah",
@@ -18,9 +19,9 @@ export const metadata: Metadata = {
     url: "/menu",
     title: "Luna Dine — The Menu",
     description: "Every dish and price at Luna Dine, Salkia. No Ajinomoto, no trans fat, no food colour; separate chef and utensils for veg.",
-    images: [{ url: "/img/og-menu.jpg", width: 1200, height: 630, alt: "The Luna Dine menu, with the kitchen promise: no Ajinomoto, no trans fat, no food colour." }],
+    images: [{ url: ogMenu.src, width: ogMenu.width, height: ogMenu.height, alt: "The Luna Dine menu, with the kitchen promise: no Ajinomoto, no trans fat, no food colour." }],
   },
-  twitter: { card: "summary_large_image", images: ["/img/og-menu.jpg"] },
+  twitter: { card: "summary_large_image", images: [ogMenu.src] },
 };
 
 /** The menu and nothing else: this page is what the table QR codes open. */

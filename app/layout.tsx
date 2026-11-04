@@ -1,19 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import SmoothScroll from "@/components/SmoothScroll";
+import favicon from "@/assets/img/favicon.svg";
+import appleIcon from "@/assets/img/apple-touch-icon.png";
+import ogHome from "@/assets/img/og-home.jpg";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const serif = localFont({
   src: [
-    { path: "./instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
-    { path: "./instrument-serif-latin-400-italic.woff2", weight: "400", style: "italic" },
+    { path: "../assets/fonts/instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../assets/fonts/instrument-serif-latin-400-italic.woff2", weight: "400", style: "italic" },
   ],
   variable: "--font-serif",
   display: "swap",
 });
 const sans = localFont({
-  src: "./outfit-latin-wght-normal.woff2",
+  src: "../assets/fonts/outfit-latin-wght-normal.woff2",
   weight: "100 900",
   variable: "--font-sans",
   display: "swap",
@@ -27,17 +30,17 @@ export const metadata: Metadata = {
   },
   description:
     "Luna Dine is an exotic multicuisine restaurant on Salkia School Road, Howrah — Chinese, tandoor, Bengali, Thai and Korean under one moonlit roof. Call 074397 24362 to reserve.",
-  icons: { icon: "/img/favicon.svg", apple: "/img/apple-touch-icon.png" },
+  icons: { icon: favicon.src, apple: appleIcon.src },
   openGraph: {
     type: "website",
     siteName: SITE.name,
     title: "Luna Dine — Beyond Fine Dining",
     description: "Exotic multicuisine on Salkia School Road, Howrah. Chinese, tandoor, Bengali, Thai & Korean.",
     url: "/",
-    images: [{ url: "/img/og-home.jpg", width: 1200, height: 630, alt: "Luna Dine — Beyond Fine Dining. Chinese, tandoor, Bengali, Thai and Korean in Salkia, Howrah." }],
+    images: [{ url: ogHome.src, width: ogHome.width, height: ogHome.height, alt: "Luna Dine — Beyond Fine Dining. Chinese, tandoor, Bengali, Thai and Korean in Salkia, Howrah." }],
     locale: "en_IN",
   },
-  twitter: { card: "summary_large_image", images: ["/img/og-home.jpg"] },
+  twitter: { card: "summary_large_image", images: [ogHome.src] },
 };
 
 export const viewport: Viewport = {

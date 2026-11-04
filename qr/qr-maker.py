@@ -9,7 +9,7 @@ Setup, once:   pip install segno playwright   and   playwright install chromium
 Run:           python qr/qr-maker.py
 Optional:      pip install zxing-cpp pillow   so the script also checks that both images decode.
 
-<site> is PROD_URL in lib/site.ts, brand artwork comes from components/Brand.tsx and fonts from app/*.woff2, so the
+<site> is PROD_URL in lib/site.ts, brand artwork comes from components/Brand.tsx and fonts from assets/fonts/, so the
 codes always match the site. If the domain changes, run this again and reprint.
 Error level H. The finder "eyes" are only softly rounded (outer radius 0.9 module) and the logo cut-out is 9x9
 modules: stronger rounding or a bigger cut-out stopped strict decoders reading the code.
@@ -80,7 +80,7 @@ def wave(w=1000, y=330, amp=34, fill="#1b2540", stroke="#f3c37c"):
             f'<path d="M0 0H{w}V{y}{d}Z" fill="{fill}"/><path d="M{w} {y}{d}" fill="none" stroke="{stroke}" stroke-width="5"/></svg>')
 
 BASE = f"""
-@font-face{{font-family:LDSans;src:url({url('app/outfit-latin-wght-normal.woff2')});font-weight:100 900}}
+@font-face{{font-family:LDSans;src:url({url('assets/fonts/outfit-latin-wght-normal.woff2')});font-weight:100 900}}
 *{{box-sizing:border-box;margin:0}}
 html,body{{overflow:hidden;background:transparent}}
 body{{position:relative;font-family:LDSans}}

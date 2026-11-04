@@ -10,26 +10,41 @@ import { Emblem, Ornament, Wordmark } from "@/components/Brand";
 import { IArrow, IPhone, IMail, IClock, IInstagram, IFacebook, IWhatsApp, Veg } from "@/components/Icons";
 import { MENU, TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
 import { SITE } from "@/lib/site";
+import arches from "@/assets/img/arches.webp";
+import archesWide from "@/assets/img/arches-wide.webp";
+import facadeDusk from "@/assets/img/facade-dusk.webp";
+import moonGarden from "@/assets/img/moon-garden.webp";
+import moonWall from "@/assets/img/moon-wall.webp";
+import pendant from "@/assets/img/pendant.webp";
+import pichwaiTable from "@/assets/img/pichwai-table.webp";
+import signDeer from "@/assets/img/sign-deer.webp";
+import signLuna from "@/assets/img/sign-luna.webp";
+import tableSetting from "@/assets/img/table-setting.webp";
+import ogHome from "@/assets/img/og-home.jpg";
+import heroPoster from "@/assets/video/hero-poster.webp";
+
+// a URL with the file's content hash in it, like the images above (Next has no import for video)
+const heroVideo = new URL("../assets/video/hero.mp4", import.meta.url).pathname;
 
 const MARQUEE = ["Chinese", "Tandoor", "Bengali", "Thai", "Korean", "Biryani", "Momos", "Mocktails"];
 
 const ROOM = [
-  { f: "sign-deer", t: "The sign", s: "Salkia School Rd" },
-  { f: "arches", t: "Pichwai arches", s: "Hand-painted" },
-  { f: "moon-wall", t: "The moon wall", s: "Coral & green" },
-  { f: "table-setting", t: "Set & waiting", s: "Plates down, glasses out" },
-  { f: "pendant", t: "Lantern light", s: "Warm, low, golden" },
-  { f: "moon-garden", t: "Garden booth", s: "Moss & moon" },
-  { f: "pichwai-table", t: "Table for four", s: "Under the art" },
-  { f: "arches-wide", t: "The long room", s: "Mustard & marble" },
-  { f: "facade-dusk", t: "Beyond fine dining", s: "Opp. Ghasbagan Maidan" },
+  { img: signDeer, t: "The sign", s: "Salkia School Rd" },
+  { img: arches, t: "Pichwai arches", s: "Hand-painted" },
+  { img: moonWall, t: "The moon wall", s: "Coral & green" },
+  { img: tableSetting, t: "Set & waiting", s: "Plates down, glasses out" },
+  { img: pendant, t: "Lantern light", s: "Warm, low, golden" },
+  { img: moonGarden, t: "Garden booth", s: "Moss & moon" },
+  { img: pichwaiTable, t: "Table for four", s: "Under the art" },
+  { img: archesWide, t: "The long room", s: "Mustard & marble" },
+  { img: facadeDusk, t: "Beyond fine dining", s: "Opp. Ghasbagan Maidan" },
 ];
 
 // "Step inside": the arches that open up as you scroll into The Room (phones show only the middle one)
 const PORTAL = [
-  { f: "moon-wall", a: "The moon wall and coral booths at Luna Dine" },
-  { f: "arches", a: "Hand-painted Pichwai arches, lit from within, at Luna Dine" },
-  { f: "moon-garden", a: "A garden booth under the moon at Luna Dine" },
+  { img: moonWall, a: "The moon wall and coral booths at Luna Dine" },
+  { img: arches, a: "Hand-painted Pichwai arches, lit from within, at Luna Dine" },
+  { img: moonGarden, a: "A garden booth under the moon at Luna Dine" },
 ];
 
 const MENU_ITEMS = MENU.flatMap(s => s.groups.flatMap(g => g.items.map(([name, pr]) => ({ name, pr, t: g.t }))));
@@ -57,7 +72,7 @@ const STORY = "From a dream taking shape to a room filled with *warm* *light.* H
 const jsonLd = {
   "@context": "https://schema.org", "@type": "Restaurant", name: SITE.name, slogan: SITE.tagline,
   servesCuisine: ["Chinese", "Indian", "Bengali", "Thai", "Korean", "Mughlai"],
-  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: `${SITE.url}/img/og-home.jpg`,
+  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: SITE.url + ogHome.src,
   address: { "@type": "PostalAddress", streetAddress: "140/2 Salkia School Road, Opposite Ghasbagan Maidan, near Sansaraa", addressLocality: "Howrah", addressRegion: "West Bengal", postalCode: "711101", addressCountry: "IN" },
   geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
   // open every day, 11 am to midnight (owner, Nov 2026); 23:59 is the unambiguous way to write midnight here
@@ -86,7 +101,7 @@ const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
 export default function Home() {
   // The hero video's poster is the first big thing you see (full-screen on phones); start fetching it early.
-  preload("/video/hero-poster.webp", { as: "image", fetchPriority: "high" });
+  preload(heroPoster.src, { as: "image", fetchPriority: "high" });
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -127,8 +142,8 @@ export default function Home() {
             <div className="hero__arch">
               <div className="arch">
                 <div className="arch__in">
-                  <video data-auto muted playsInline loop autoPlay preload="metadata" poster="/video/hero-poster.webp" aria-label="Inside Luna Dine">
-                    <source src="/video/hero.mp4" type="video/mp4" />
+                  <video data-auto muted playsInline loop autoPlay preload="metadata" poster={heroPoster.src} aria-label="Inside Luna Dine">
+                    <source src={heroVideo} type="video/mp4" />
                   </video>
                 </div>
               </div>
@@ -177,8 +192,8 @@ export default function Home() {
             <div className="portal__stage">
               <div className="portal__arches">
                 {PORTAL.map((a, i) => (
-                  <div className={i === 1 ? "portal__arch portal__arch--c" : "portal__arch"} key={a.f}>
-                    <Image src={`/img/${a.f}.webp`} alt={a.a} width={720} height={1280} sizes="(orientation: portrait) 100vw, 30vw" />
+                  <div className={i === 1 ? "portal__arch portal__arch--c" : "portal__arch"} key={a.a}>
+                    <Image src={a.img} alt={a.a} sizes="(orientation: portrait) 100vw, 30vw" />
                   </div>
                 ))}
               </div>
@@ -201,7 +216,7 @@ export default function Home() {
                 return (
                   <figure className={i % ROOM.length % 2 ? "card card--low" : "card"} key={i} aria-hidden={copy || undefined}>
                     <div className="card__img">
-                      <Image src={`/img/${c.f}.webp`} alt={copy ? "" : `${c.t.replace("&", "and")} at Luna Dine`} width={720} height={1280} sizes="(max-width:860px) 62vw, 22vw" />
+                      <Image src={c.img} alt={copy ? "" : `${c.t.replace("&", "and")} at Luna Dine`} sizes="(max-width:860px) 62vw, 22vw" />
                     </div>
                     <figcaption><b>{c.t}</b><span>{c.s}</span></figcaption>
                   </figure>
@@ -246,7 +261,7 @@ export default function Home() {
         {/* VISIT */}
         <section className="visit" id="visit">
           <div className="visit__bg" aria-hidden="true">
-            <Image src="/img/sign-luna.webp" alt="" fill sizes="100vw" />
+            <Image src={signLuna} alt="" fill sizes="100vw" />
           </div>
           <div className="wrap visit__grid">
             <div>

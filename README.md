@@ -21,7 +21,8 @@ npm run build   # production build
 | Styles | `app/globals.css` |
 | Logo SVG paths (traced from the printed menu) | `components/Brand.tsx` |
 | Printable QR codes (menu, Google review sticker) | `qr/` |
-| Photos, video, PDF menu | `public/` |
+| Photos, video, icons, share images, fonts (imported, so their URLs change with their content) | `assets/` |
+| The printed PDF menu (fixed address) | `public/` |
 
 ## Handoff notes
 - **QR menu:** `/menu` is the page the table QR codes open. It's only the menu, with an All / Veg / Non-veg filter and no site nav or search.

@@ -9,7 +9,7 @@
   --navy-2:#243055;
   --cream:#f4ecda;
   --paper:#efe5cd;
-  --paper-bg:var(--paper) url(/img/paper.webp) 0 0/500px; /* the menu-card paper: use with background-blend-mode:multiply */
+  --paper-bg:var(--paper) url(../assets/img/paper.webp) 0 0/500px; /* the menu-card paper: use with background-blend-mode:multiply */
   --ink:#1b2540;
   --gold:#f3c37c;
   --ember:#d4694e;

@@ -1,4 +1,5 @@
 import { SITE } from "@/lib/site";
+import favicon from "@/assets/img/favicon.svg";
 
 /* /review: what the review QR codes open. A tiny static page (no React, no bundles) rather than a server redirect,
    because of what happens when Google's link opens the Google Maps app instead of a web page:
@@ -24,7 +25,7 @@ export function GET() {
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#080d1b">
 <title>Review Luna Dine</title>
-<link rel="icon" href="/img/favicon.svg">
+<link rel="icon" href="${favicon.src}">
 <script>
 (function () {
   var to = ${JSON.stringify(url)}, left = false;
