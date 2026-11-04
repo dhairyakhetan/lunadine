@@ -8,7 +8,8 @@ import { SITE } from "@/lib/site";
      left behind is the home page, and if the reader comes back to it, it loads the home page for real.
    When the link opens in the browser instead, it replaces this page in the same tab (location.replace), so Back
    goes to wherever the reader was before, not back here to be bounced again.
-   The target is SITE.review in lib/site.ts. Built once at build time (force-static). */
+   The target is SITE.review in lib/site.ts; the fallback button (shown only if the redirect doesn't happen) uses
+   SITE.reviewWeb, the browser review box, so there's always a way in. Built once at build time (force-static). */
 export const dynamic = "force-static";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -51,7 +52,7 @@ a{color:inherit}
 <main>
 <h1>Taking you to Google reviews</h1>
 <p>Thank you for dining with us at Luna Dine</p>
-<a class="btn" href="${esc(url)}">Leave a review</a>
+<a class="btn" href="${esc(SITE.reviewWeb)}">Leave a review</a>
 <p><a href="/">Back to Luna Dine</a></p>
 </main>
 </body>

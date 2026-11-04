@@ -26,9 +26,13 @@ export const SITE = {
   facebook: "https://www.facebook.com/profile.php?id=61595533162677",
   geo: { lat: LAT, lng: LNG },
   /* Where luna-dine.vercel.app/review sends people (the review QR codes point there, so this can change without
-     reprinting; app/review/route.ts, redeploy to apply): the "write a review" box once PLACE_ID is set, otherwise
-     the Maps listing. A Business Profile "Ask for reviews" link (https://g.page/r/…/review) also works here. */
-  review: PLACE_ID
-    ? `https://search.google.com/local/writereview?placeid=${PLACE_ID}`
-    : "https://www.google.com/maps/search/?api=1&query=Luna%2BDine%2BSalkia%2BHowrah",
+     reprinting; app/review/route.ts, redeploy to apply).
+     review: the Business-Profile-style short review link, which on Android opens the Google Maps app straight to
+       the review box (in a browser it shows Google's review box). Its code is the listing's CID
+       (0x484ce6ec9013b9dd) as Google encodes it, base64 of [0x09, CID little-endian, 0x10, 0x01]; built from the
+       listing, not issued by the Business Profile, and not yet tested on a phone. If it ever fails, set review to
+       reviewWeb.
+     reviewWeb: Google's "write a review" box in the browser, from PLACE_ID. The fallback button on /review. */
+  review: "https://g.page/r/Cd25E5Ds5kxIEAE/review",
+  reviewWeb: `https://search.google.com/local/writereview?placeid=${PLACE_ID}`,
 };
