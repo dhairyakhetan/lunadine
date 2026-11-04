@@ -22,8 +22,8 @@ export function jumpToY(y: number) {
   else window.scrollTo(0, y);
 }
 
-/** Smooth-scroll to a section by id (null: the top of the page). */
-export function scrollToId(id: string | null) {
-  const el = id ? document.getElementById(id) : null;
-  if (!id || el) scrollToY(el ? pageTop(el) : 0, 1.4);
+/** Smooth-scroll to a section by id. */
+export function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (el) scrollToY(pageTop(el), 1.4);
 }

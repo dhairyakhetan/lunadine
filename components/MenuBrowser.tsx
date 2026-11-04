@@ -70,9 +70,10 @@ const keyOf = (el: HTMLElement) =>
     : `s|${el.closest(".msec")?.id}`;
 /** our running Web Animations (not CSS transitions like the moons' and the pill's, which retarget by themselves) */
 const ourAnims = (root: Element | null) => (root?.getAnimations({ subtree: true }) ?? []).filter(a => a.constructor === Animation);
-type Box = { x: number; y: number; h: number; vis: boolean; t?: string };
+type Box = { x: number; y: number; vis: boolean; t?: string }; // a mover on screen (t: a section title's text)
+type Card = { y: number; h: number; vis: boolean }; // a desktop card's paper on screen
 /** the screen just before a switch: every mover's and card's box, what was in view, the phone's stuck section title */
-type Snap = { pos: Map<string, Box>; cards: Map<string, Box>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number; stuck: string | null; stuckT: string; row: DOMRect | null };
+type Snap = { pos: Map<string, Box>; cards: Map<string, Card>; seen: { k: string; el: HTMLElement; r: DOMRect }[]; line: number; stuck: string | null; stuckT: string; row: DOMRect | null };
 /** where the reader is: a section kept put (no keys), or the first of `keys` (dishes) that's still shown, at `top` on screen */
 type Anchor = { sec: string; keys: string[]; top: number };
 
@@ -180,21 +181,21 @@ export default function MenuBrowser({ prodHost }: { prodHost: string }) {
   const freezers = useRef(new Set<() => void>()); // stops a layer following the scroll
   const pending = useRef<{ anchor: Anchor | null; snap: Snap | null } | null>(null); // a switch the layout effect is to finish
   /** a card's paper as it is on screen right now (its ::before may be mid-animation: translateY + scaleY from the top) */
-  const cardBox = (el: HTMLElement, line: number): Box => {
+  const cardBox = (el: HTMLElement, line: number): Card => {
     const r = el.getBoundingClientRect();
     const m = getComputedStyle(el, "::before").transform.match(/matrix\(([^)]+)\)/)?.[1].split(",").map(Number);
     const y = r.top + (m ? m[5] : 0), h = r.height * (m ? m[3] : 1);
-    return { x: r.left, y, h, vis: y + h > line && y < innerHeight };
+    return { y, h, vis: y + h > line && y < innerHeight };
   };
   const snapshot = (): Snap | null => {
     const b = body.current;
     if (!b || reducedMotion()) return null;
     const line = readingLine(), vh = innerHeight, stuck = stuckHead();
-    const pos = new Map<string, Box>(), cards = new Map<string, Box>(), seen: Snap["seen"] = [];
+    const pos = new Map<string, Box>(), cards = new Map<string, Card>(), seen: Snap["seen"] = [];
     const take = (el: HTMLElement, visible: (r: DOMRect) => boolean) => {
       if (!shown(el) || el === stuck) return;
       const r = el.getBoundingClientRect(), k = keyOf(el), vis = visible(r); // on-screen rects, mid-animation included
-      pos.set(k, { x: r.left, y: r.top, h: r.height, vis, t: el.classList.contains("msec__head") ? titleNow(el) : undefined });
+      pos.set(k, { x: r.left, y: r.top, vis, t: el.classList.contains("msec__head") ? titleNow(el) : undefined });
       if (vis) seen.push({ k, el, r });
     };
     b.querySelectorAll<HTMLElement>(MOVERS).forEach(el => take(el, r => r.bottom > line && r.top < vh));

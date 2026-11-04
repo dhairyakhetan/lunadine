@@ -3,7 +3,7 @@
 Luna Dine QR codes. Writes, next to this file:
   luna-menu.png    plain QR for <site>/menu, with the Luna emblem in the middle
   luna-review.png  desk sticker, "Leave us your review on Google", for <site>/review
-                   (/review redirects to SITE.review in lib/site.ts, so the Google link can change without reprinting)
+                   (/review sends people on to SITE.review in lib/site.ts, so the Google link can change without reprinting)
 
 Setup, once:   pip install segno playwright   and   playwright install chromium
 Run:           python qr/qr-maker.py

@@ -25,7 +25,7 @@ npm run build   # production build
 
 ## Handoff notes
 - **QR menu:** `/menu` is the page the table QR codes open. It's only the menu, with an All / Veg / Non-veg filter and no site nav or search.
-- **Review QR:** `/review` redirects to `SITE.review` in `lib/site.ts`, so the Google review link can change without reprinting.
+- **Review QR:** `/review` (`app/review/route.ts`) sends people on to `SITE.review` in `lib/site.ts`, so the Google review link can change without reprinting.
 - **Opening hours:** daily, 11 am – midnight (from the owner), shown in the Visit section and in Google's structured data.
 - **Menu issues / review mode:** open `/menu?review` (or any preview deploy) to see the **Menu issues** button and flagged dishes. The list lives in `lib/menu-issues.ts`; it's empty now, and the button only shows while it has entries.
 - **Live address:** `https://luna-dine.vercel.app`, set in `lib/site.ts`. Share previews, the sitemap, Google's restaurant details and the QR codes use it. If the domain changes, update it there, redeploy, and remake the QR codes (`python qr/qr-maker.py`).

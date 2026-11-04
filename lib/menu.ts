@@ -4,8 +4,8 @@
    Item format: [name, price, note?]  — price is a number in ₹ or "MRP". */
 
 export type Diet = "v" | "n" | "x";
-export type MenuItem = [name: string, price: number | "MRP", note?: string];
-export type MenuGroup = { label: string; t: Diet; items: MenuItem[] };
+type MenuItem = [name: string, price: number | "MRP", note?: string];
+type MenuGroup = { label: string; t: Diet; items: MenuItem[] };
 /** `titles`: what the section is called under the Veg (`v`) or Non-veg (`n`) filter, when that differs from `title`. */
 export type MenuSection = { id: string; title: string; titles?: { v?: string; n?: string }; kicker: string; groups: MenuGroup[] };
 

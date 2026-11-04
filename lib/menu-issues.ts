@@ -2,7 +2,7 @@
    (the "Menu issues" button on /menu; see MenuBrowser). Remove an entry once the owner answers it.
    `items` are exact names from lib/menu.ts that get flagged inline ("Show" jumps to the first). */
 
-export type MenuIssue = {
+type MenuIssue = {
   title: string;
   detail: string;
   source: "card" | "review"; // "card": queried from the printed card; "review": spotted while reviewing the site
