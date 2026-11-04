@@ -1,74 +1,45 @@
 "use client";
 import { useEffect } from "react";
+import { reducedMotion } from "@/lib/scroll";
 
 /**
- * Page-level scroll effects. Works on whatever markup the current page has:
- * [data-reveal]/.split reveals, signature dishes lighting up on touch screens, video play-on-screen, lazy map, count-up,
- * story word highlight + moon phase, The Room "step inside" arches, mobile dock.
+ * The home page's scroll effects, run on its server-rendered markup (app/page.tsx): [data-reveal] / .split reveals,
+ * signature dishes lit on touch screens, the hero video playing only on screen, the lazy map, the count-up stats,
+ * the story's words and moon, The Room's "step inside" arches, and the phone dock. Cleans up on unmount.
  */
-export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
+export default function PageFX() {
   useEffect(() => {
-    const d = document, root = d.documentElement;
-    if (noIntro) root.classList.add("no-intro");
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const cleanups: (() => void)[] = [];
+    const d = document, reduce = reducedMotion(), ac = new AbortController(), observers: IntersectionObserver[] = [];
     const clamp = (v: number) => Math.min(1, Math.max(0, v));
-    const on = <K extends keyof WindowEventMap>(t: K, f: (e: WindowEventMap[K]) => void, o?: AddEventListenerOptions) => {
-      addEventListener(t, f, o); cleanups.push(() => removeEventListener(t, f));
+    /** call `fn` as each element matching `sel` enters or leaves the viewport (as `opts` sets it) */
+    const watch = (sel: string, fn: (el: HTMLElement, on: boolean, io: IntersectionObserver) => void, opts?: IntersectionObserverInit) => {
+      const io = new IntersectionObserver(es => es.forEach(en => fn(en.target as HTMLElement, en.isIntersecting, io)), opts);
+      d.querySelectorAll(sel).forEach(el => io.observe(el));
+      observers.push(io);
     };
-    /* reveals */
-    const io = new IntersectionObserver(es => es.forEach(en => {
-      if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
-    }), { rootMargin: "0px 0px -12% 0px" });
-    d.querySelectorAll("[data-reveal], .split").forEach(el => io.observe(el));
-    cleanups.push(() => io.disconnect());
 
-    /* touch screens have no hover: the signature dish passing through the middle of the screen lights up instead */
-    if (matchMedia("(hover: none)").matches) {
-      const lit = new IntersectionObserver(es => es.forEach(en => en.target.classList.toggle("is-lit", en.isIntersecting)),
-        { rootMargin: "-42% 0px -42% 0px" });
-      d.querySelectorAll(".dish").forEach(el => lit.observe(el));
-      cleanups.push(() => lit.disconnect());
-    }
-
-    /* video plays only on screen */
-    d.querySelectorAll<HTMLVideoElement>("video[data-auto]").forEach(v => {
-      if (reduce) { v.pause(); return; }
-      const o = new IntersectionObserver(([en]) => { en.isIntersecting ? v.play().catch(() => {}) : v.pause(); }, { threshold: 0.05 });
-      o.observe(v); cleanups.push(() => o.disconnect());
-    });
-
-    /* lazy map */
-    d.querySelectorAll<HTMLIFrameElement>("iframe[data-src]").forEach(f => {
-      const o = new IntersectionObserver(([en]) => { if (en.isIntersecting) { f.src = f.dataset.src!; o.disconnect(); } }, { rootMargin: "600px" });
-      o.observe(f); cleanups.push(() => o.disconnect());
-    });
-
-    /* count up */
-    d.querySelectorAll<HTMLElement>("[data-count]").forEach(el => {
-      if (reduce) return;
-      const end = +el.dataset.count!;
-      el.textContent = "0"; // the stats fade in before they count, so don't flash the final number first
-      const o = new IntersectionObserver(([en]) => {
-        if (!en.isIntersecting) return; o.disconnect();
+    watch("[data-reveal], .split", (el, on, io) => { if (on) { el.classList.add("is-in"); io.unobserve(el); } }, { rootMargin: "0px 0px -12% 0px" });
+    // touch screens have no hover: the signature dish passing through the middle of the screen lights up instead
+    if (matchMedia("(hover: none)").matches) watch(".dish", (el, on) => el.classList.toggle("is-lit", on), { rootMargin: "-42% 0px -42% 0px" });
+    watch("video[data-auto]", (el, on) => { const v = el as HTMLVideoElement; if (on && !reduce) v.play().catch(() => {}); else v.pause(); }, { threshold: 0.05 });
+    watch("iframe[data-src]", (el, on, io) => { if (on) { (el as HTMLIFrameElement).src = el.dataset.src!; io.unobserve(el); } }, { rootMargin: "600px" });
+    if (!reduce) {
+      // count up from 0 (the stats fade in before they count, so don't flash the final number first)
+      d.querySelectorAll("[data-count]").forEach(el => { el.textContent = "0"; });
+      watch("[data-count]", (el, on, io) => {
+        if (!on) return;
+        io.unobserve(el);
+        const end = +el.dataset.count!;
         let t0 = 0;
         const step = (t: number) => {
           t0 ||= t; // rAF time, not performance.now(): that can be later than the first frame's time and go negative
           const k = Math.min(1, (t - t0) / 1600);
-          el.textContent = String(Math.round(end * (1 - Math.pow(1 - k, 4))));
+          el.textContent = String(Math.round(end * (1 - (1 - k) ** 4)));
           if (k < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
       }, { threshold: 0.6 });
-      o.observe(el); cleanups.push(() => o.disconnect());
-    });
-
-    /* story + moon */
-    const story = d.querySelector<HTMLElement>(".story");
-    const words = story ? [...story.querySelectorAll<HTMLElement>(".w")] : [];
-    const moon = d.querySelector<HTMLElement>(".moon");
-
-    const dock = d.querySelector<HTMLElement>(".dock");
+    }
 
     /* The Room, "step inside": while the stage is pinned, each arch goes from the small frame between the words
        (.portal__gap) to its own place in .portal__arches. Transform and opacity only; sizes are measured on resize
@@ -76,9 +47,9 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
     const portal = d.querySelector<HTMLElement>(".portal");
     const stage = portal?.querySelector<HTMLElement>(".portal__stage");
     const gap = portal?.querySelector<HTMLElement>(".portal__gap");
-    const arches = portal ? [...portal.querySelectorAll<HTMLElement>(".portal__arch")] : [];
+    const arches = [...(portal?.querySelectorAll<HTMLElement>(".portal__arch") ?? [])];
     const pimgs = arches.map(a => a.querySelector("img"));
-    const halves = portal ? [...portal.querySelectorAll<HTMLElement>(".portal__l, .portal__r")] : [];
+    const halves = [...(portal?.querySelectorAll<HTMLElement>(".portal__l, .portal__r") ?? [])];
     const phead = portal?.querySelector<HTMLElement>(".portal__head");
     const pcap = portal?.querySelector<HTMLElement>(".portal__cap");
     type Box = { x: number; y: number; w: number; h: number };
@@ -119,40 +90,44 @@ export default function PageFX({ noIntro = false }: { noIntro?: boolean }) {
       halves.forEach((h, i) => { h.style.transform = `translateX(${((i ? 1 : -1) * e * 24).toFixed(2)}vw)`; });
       portal.classList.add("on");
     };
-    const portalFrame = () => {
-      if (!portal) return;
-      const r = portal.getBoundingClientRect();
-      if (r.bottom > 0 && r.top < innerHeight) place(clamp(-r.top / run));
+    /** place the arches for the current scroll, while the portal is on screen (or always, when `force`d) */
+    const portalFrame = (force = false) => {
+      const r = portal?.getBoundingClientRect();
+      if (r && (force || (r.bottom > 0 && r.top < innerHeight))) place(clamp(-r.top / run));
     };
     if (portal) {
       measure();
-      place(clamp(-portal.getBoundingClientRect().top / run));
-      const onResize = () => { measure(); portalFrame(); };
-      on("resize", onResize, { passive: true });
-      d.fonts?.ready.then(() => { measure(); portalFrame(); }); // the headline's width moves the frame between the words
+      portalFrame(true);
+      const remeasure = () => { measure(); portalFrame(); };
+      addEventListener("resize", remeasure, { passive: true, signal: ac.signal });
+      d.fonts?.ready.then(remeasure); // the headline's width moves the frame between the words
     }
 
+    /* every scrolled frame: the story's words light up and its moon waxes, the arches move, the dock shows */
+    const story = d.querySelector<HTMLElement>(".story");
+    const words = [...(story?.querySelectorAll<HTMLElement>(".w") ?? [])];
+    const moon = d.querySelector<HTMLElement>(".moon");
+    const dock = d.querySelector<HTMLElement>(".dock");
     let ticking = false;
     const frame = () => {
-      const y = scrollY;
+      ticking = false;
       const r = story?.getBoundingClientRect();
-      if (story && r && r.bottom > 0 && r.top < innerHeight) { // only while the story is on screen
+      if (r && r.bottom > 0 && r.top < innerHeight) { // only while the story is on screen
         const p = clamp((innerHeight * 0.75 - r.top) / (r.height * 0.62));
         const n = Math.round(p * words.length);
-        for (let i = 0; i < words.length; i++) words[i].classList.toggle("on", i < n);
+        words.forEach((w, i) => w.classList.toggle("on", i < n));
         moon?.style.setProperty("--p", p.toFixed(3));
       }
       portalFrame();
-      dock?.classList.toggle("is-on", y > innerHeight * 0.6);
-      ticking = false;
+      dock?.classList.toggle("is-on", scrollY > innerHeight * 0.6);
     };
     const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
-    on("scroll", req, { passive: true });
-    on("resize", req, { passive: true });
+    addEventListener("scroll", req, { passive: true, signal: ac.signal });
+    addEventListener("resize", req, { passive: true, signal: ac.signal });
     frame();
 
-    return () => cleanups.forEach(f => f());
-  }, [noIntro]);
+    return () => { ac.abort(); observers.forEach(io => io.disconnect()); };
+  }, []);
 
   return null;
 }

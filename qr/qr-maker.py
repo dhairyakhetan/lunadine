@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """
 Luna Dine QR codes. Writes, next to this file:
-  luna-menu.png    plain QR for https://luna-dine.vercel.app/menu, with the Luna emblem in the middle
-  luna-review.png  desk sticker, "Leave us your review on Google", for https://luna-dine.vercel.app/review
+  luna-menu.png    plain QR for <site>/menu, with the Luna emblem in the middle
+  luna-review.png  desk sticker, "Leave us your review on Google", for <site>/review
                    (/review redirects to SITE.review in lib/site.ts, so the Google link can change without reprinting)
 
 Setup, once:   pip install segno playwright   and   playwright install chromium
 Run:           python qr/qr-maker.py
 Optional:      pip install zxing-cpp pillow   so the script also checks that both images decode.
 
-Brand artwork comes from components/Brand.tsx and fonts from app/*.woff2, so the codes always match the site.
+<site> is PROD_URL in lib/site.ts, brand artwork comes from components/Brand.tsx and fonts from app/*.woff2, so the
+codes always match the site. If the domain changes, run this again and reprint.
 Error level H. The finder "eyes" are only softly rounded (outer radius 0.9 module) and the logo cut-out is 9x9
 modules: stronger rounding or a bigger cut-out stopped strict decoders reading the code.
 """
-import os, re, sys, pathlib
+import re, sys, pathlib
 import segno
 from playwright.sync_api import sync_playwright
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent
-URLS = {"menu": "https://luna-dine.vercel.app/menu", "review": "https://luna-dine.vercel.app/review"}
+SITE_URL = re.search(r'PROD_URL = "([^"]+)"', (REPO / "lib/site.ts").read_text()).group(1)
+URLS = {"menu": f"{SITE_URL}/menu", "review": f"{SITE_URL}/review"}
 
 def url(p): return (REPO / p).as_uri()
 

@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Lenis from "lenis";
+import { jumpToY, reducedMotion } from "@/lib/scroll";
 
 declare global {
   interface Window { LD?: { lenis: Lenis | null } }
@@ -12,28 +13,23 @@ const lastY = new Map<string, number>();
 let popY: number | null = null; // set by a Back/Forward (popstate) until the new page has been placed
 let shown = ""; // the pathname currently on screen
 
-/** Smooth wheel scrolling (desktop) via Lenis. Exposes the instance on window.LD for other components. */
+/** Mounted once, in the root layout, so it lives across page navigations. Smooth wheel scrolling via Lenis
+ *  (window.LD.lenis; null under reduced motion), scroll placement on navigation, and the intro played only once. */
 export default function SmoothScroll() {
   const pathname = usePathname();
   const first = useRef(true);
 
   useEffect(() => {
-    try { sessionStorage.setItem("ld-intro", "1"); } catch {}
+    try { sessionStorage.setItem("ld-intro", "1"); } catch {} // layout.tsx skips the intro on this tab's next loads
     const onScroll = () => { if (popY === null) lastY.set(location.pathname, scrollY); };
     // Registered before Next's own popstate handler, and the URL has already changed when it runs.
     const onPop = () => { if (location.pathname !== shown) popY = lastY.get(location.pathname) ?? 0; };
-    addEventListener("scroll", onScroll, { passive: true });
-    addEventListener("popstate", onPop);
-    const off = () => { removeEventListener("scroll", onScroll); removeEventListener("popstate", onPop); };
-
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { window.LD = { lenis: null }; return off; }
-    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+    const ac = new AbortController();
+    addEventListener("scroll", onScroll, { passive: true, signal: ac.signal });
+    addEventListener("popstate", onPop, { signal: ac.signal });
+    const lenis = reducedMotion() ? null : new Lenis({ lerp: 0.1, smoothWheel: true, autoRaf: true });
     window.LD = { lenis };
-    let id = 0;
-    const raf = (t: number) => { lenis.raf(t); id = requestAnimationFrame(raf); };
-    id = requestAnimationFrame(raf);
-    return () => { off(); cancelAnimationFrame(id); lenis.destroy(); window.LD = { lenis: null }; };
+    return () => { ac.abort(); lenis?.destroy(); window.LD = { lenis: null }; };
   }, []);
 
   // On navigation: a new page starts at the top; Back/Forward returns to where you were on that page;
@@ -43,19 +39,15 @@ export default function SmoothScroll() {
     const initial = first.current;
     first.current = false;
     shown = pathname;
-    document.documentElement.classList.remove("menu-open");
+    if (!initial) document.documentElement.classList.add("no-intro"); // so coming back home doesn't replay it
     const t = setTimeout(() => {
-      const lenis = window.LD?.lenis;
-      lenis?.resize();
-      const hash = location.hash;
-      const el = hash.length > 1 ? document.querySelector(hash) : null;
-      const to = (y: number) => (lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : window.scrollTo(0, y));
-      if (el) lenis ? lenis.scrollTo(el as HTMLElement, { immediate: true }) : el.scrollIntoView();
-      else if (popY !== null) to(popY);
-      else if (!initial) to(0);
+      window.LD?.lenis?.resize();
+      const { hash } = location, el = hash.length > 1 ? document.getElementById(hash.slice(1)) : null;
+      if (el) el.scrollIntoView(); // honours the target's scroll-margin-top
+      else if (popY !== null) jumpToY(popY);
+      else if (!initial) jumpToY(0);
       if (hash) history.replaceState(history.state, "", location.pathname + location.search);
       popY = null;
-      lenis?.start();
     }, 30);
     return () => clearTimeout(t);
   }, [pathname]);

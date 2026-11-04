@@ -1,77 +1,67 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Emblem, Wordmark } from "./Brand";
 import { SITE } from "@/lib/site";
 import ScrollTo from "./ScrollTo";
 
-type L = { href: string; label: string; current?: boolean };
+/** [to, label]: "/path" is another page; anything else is a section id on this page (a ScrollTo button, never a #link). */
+type L = [to: string, label: string];
 
-/** Fixed top bar: frosts on scroll, hides when scrolling down, full-screen sheet on mobile. */
-export default function Nav({ links, cta, sheet }: { links: L[]; cta: L; sheet: L[] }) {
+/** The home page's fixed top bar: frosts once you scroll (html.nav-solid), hides while you scroll down (html.nav-gone),
+ *  and below 860px opens a full-screen sheet (html.menu-open). `brand` is the logo link, rendered on the server so
+ *  its SVG paths stay out of this bundle. The bar shows the in-page `links` and a "View menu" button; the sheet shows
+ *  every link. */
+export default function Nav({ brand, links }: { brand: React.ReactNode; links: L[] }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("menu-open", open);
-    const lenis = window.LD?.lenis;
-    open ? lenis?.stop() : lenis?.start();
+    if (!open) return;
+    const root = document.documentElement, lenis = window.LD?.lenis;
+    root.classList.add("menu-open");
+    lenis?.stop();
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
+    return () => { root.classList.remove("menu-open"); lenis?.start(); removeEventListener("keydown", onKey); };
   }, [open]);
 
   useEffect(() => {
-    const nav = document.querySelector<HTMLElement>(".nav")!;
     const root = document.documentElement;
     let lastY = 0, ticking = false;
     const update = () => {
-      const y = window.scrollY;
-      nav.classList.toggle("is-scrolled", y > 40);
-      if (y !== lastY) { // a scroll event without movement (e.g. dispatched after a layout change) keeps the current state
-        const hide = y > lastY && y > innerHeight * 0.9 && !root.classList.contains("menu-open");
-        nav.classList.toggle("is-hidden", hide);
-        root.classList.toggle("nav-gone", hide);
-      }
+      const y = scrollY;
+      root.classList.toggle("nav-solid", y > 40);
+      // a scroll event without movement (e.g. dispatched after a layout change) keeps the current state
+      if (y !== lastY) root.classList.toggle("nav-gone", y > lastY && y > innerHeight * 0.9 && !root.classList.contains("menu-open"));
       lastY = y; ticking = false;
     };
     const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
     addEventListener("scroll", onScroll, { passive: true });
     update();
-    return () => { removeEventListener("scroll", onScroll); root.classList.remove("nav-gone"); };
+    return () => { removeEventListener("scroll", onScroll); root.classList.remove("nav-solid", "nav-gone"); };
   }, []);
 
-  // "#id" hrefs are sections on this page: rendered as buttons that smooth-scroll, never as #links.
   // A plain function, not a component: a component defined in here would remount every link on each render.
-  const link = (l: L, className?: string, onClick?: () => void) =>
-    l.href.startsWith("#") ? (
-      <ScrollTo key={l.href} to={l.href.slice(1)} className={className} onClick={onClick}>{l.label}</ScrollTo>
-    ) : l.href.startsWith("tel:") ? (
-      <a key={l.href} href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</a>
-    ) : (
-      <Link key={l.href} href={l.href} className={className} onClick={onClick} aria-current={l.current ? "page" : undefined}>{l.label}</Link>
-    );
+  const link = ([to, label]: L, onClick?: () => void) => to.startsWith("/")
+    ? <Link key={to} href={to} onClick={onClick}>{label}</Link>
+    : <ScrollTo key={to} to={to} onClick={onClick}>{label}</ScrollTo>;
 
   return (
     <>
       <header className="nav">
-        <Link className="brand" href="/" aria-label="Luna Dine home">
-          <Emblem className="emb" />
-          <Wordmark className="wm" label="Luna Dine" />
-        </Link>
+        {brand}
         <nav className="nav__links" aria-label="Primary">
-          {links.map(l => link(l))}
-          {link(cta, "btn")}
+          {links.filter(([to]) => !to.startsWith("/")).map(l => link(l))}
+          <Link className="btn" href="/menu">View menu</Link>
         </nav>
         <button className="burger" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(o => !o)}>
           <span /><span />
         </button>
       </header>
       <div className="sheet" aria-label="Mobile navigation" aria-hidden={!open}>
-        {sheet.map(l => link(l, undefined, () => setOpen(false)))}
+        {links.map(l => link(l, () => setOpen(false)))}
         <div className="sheet__foot">
           140/2 Salkia School Road, Howrah 711101<br />
-          <a href={SITE.tel} style={{ font: "inherit", opacity: 1, transform: "none", display: "inline" }}>{SITE.phone}</a>
+          <a href={SITE.tel}>{SITE.phone}</a>
         </div>
       </div>
     </>

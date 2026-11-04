@@ -5,10 +5,10 @@ import { preload } from "react-dom";
 import Nav from "@/components/Nav";
 import Sky from "@/components/Sky";
 import PageFX from "@/components/PageFX";
-import { Footer, Dock } from "@/components/Chrome";
-import { Emblem, Ornament } from "@/components/Brand";
-import { IArrow, IPhone, IMail, IClock, ISeal, ILeaf, IInstagram, IFacebook, IWhatsApp } from "@/components/Icons";
-import { TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
+import { Footer, Dock, KitchenPromise } from "@/components/Chrome";
+import { Emblem, Ornament, Wordmark } from "@/components/Brand";
+import { IArrow, IPhone, IMail, IClock, IInstagram, IFacebook, IWhatsApp, Veg } from "@/components/Icons";
+import { MENU, TOTAL_DISHES, TOTAL_SECTIONS } from "@/lib/menu";
 import { SITE } from "@/lib/site";
 
 const MARQUEE = ["Chinese", "Tandoor", "Bengali", "Thai", "Korean", "Biryani", "Momos", "Mocktails"];
@@ -32,17 +32,24 @@ const PORTAL = [
   { f: "moon-garden", a: "A garden booth under the moon at Luna Dine" },
 ];
 
-const DISHES: { c: string; t: "v" | "n" | "x"; n: string; p: string; pr: number }[] = [
-  { c: "Chinese", t: "n", n: "Drums of Heaven", p: "Chicken winglets frenched into lollipops, tossed hot in a glossy chilli-garlic glaze.", pr: 280 },
-  { c: "Thai", t: "n", n: "Pad Thai Noodles", p: "Flat rice noodles wok-tossed the Bangkok way — sweet, sour, a little nutty.", pr: 300 },
-  { c: "Korean", t: "v", n: "Kimchi Fried Rice", p: "Tangy, fermented kimchi and smoky wok heat folded through every grain.", pr: 250 },
-  { c: "Tandoor", t: "n", n: "Chicken Afghani", p: "A creamy, gently spiced marinade, charred slow in the clay oven. Full bird.", pr: 540 },
-  { c: "Tandoor", t: "v", n: "Malai Cheese Tikka", p: "Paneer in a rich cream-and-cheese marinade, kissed by the tandoor.", pr: 350 },
-  { c: "Bengali", t: "n", n: "Sorshe Pomfret", p: "Pomfret in a sharp, golden mustard gravy — a Bengali Sunday on a plate.", pr: 440 },
-  { c: "Biryani", t: "n", n: "Mutton Biryani Special", p: "Fragrant long-grain rice and tender mutton, sealed and slow-cooked.", pr: 400 },
-  { c: "Indian", t: "v", n: "Dal Makhani", p: "Black lentils simmered low and long, finished with butter and cream.", pr: 350 },
-  { c: "Mocktail", t: "x", n: "Kiwi Mojito", p: "Fresh kiwi, mint and lime over crushed ice, topped with fizz.", pr: 185 },
-];
+const MENU_ITEMS = MENU.flatMap(s => s.groups.flatMap(g => g.items.map(([name, pr]) => ({ name, pr, t: g.t }))));
+// Signature dishes: n is the name shown, m the dish's name in lib/menu.ts when it differs. The price and the
+// veg / non-veg mark come from the menu, so they can't drift from it (the build fails if a name isn't found).
+const DISHES = [
+  { c: "Chinese", n: "Drums of Heaven", p: "Chicken winglets frenched into lollipops, tossed hot in a glossy chilli-garlic glaze." },
+  { c: "Thai", n: "Pad Thai Noodles", m: "Pad Thai Chicken Noodles", p: "Flat rice noodles wok-tossed the Bangkok way — sweet, sour, a little nutty." },
+  { c: "Korean", n: "Kimchi Fried Rice", m: "Korean Kimchi Fried Rice", p: "Tangy, fermented kimchi and smoky wok heat folded through every grain." },
+  { c: "Tandoor", n: "Chicken Afghani", m: "Chicken Afghani — Full", p: "A creamy, gently spiced marinade, charred slow in the clay oven. Full bird." },
+  { c: "Tandoor", n: "Malai Cheese Tikka", m: "Paneer Malai Cheese Tikka", p: "Paneer in a rich cream-and-cheese marinade, kissed by the tandoor." },
+  { c: "Bengali", n: "Sorshe Pomfret", p: "Pomfret in a sharp, golden mustard gravy — a Bengali Sunday on a plate." },
+  { c: "Biryani", n: "Mutton Biryani Special", p: "Fragrant long-grain rice and tender mutton, sealed and slow-cooked." },
+  { c: "Indian", n: "Dal Makhani", p: "Black lentils simmered low and long, finished with butter and cream." },
+  { c: "Mocktail", n: "Kiwi Mojito", p: "Fresh kiwi, mint and lime over crushed ice, topped with fizz." },
+].map(d => {
+  const item = MENU_ITEMS.find(i => i.name === (d.m ?? d.n));
+  if (!item) throw new Error(`Signature dish "${d.m ?? d.n}" isn't in lib/menu.ts`);
+  return { ...d, t: item.t, pr: item.pr };
+});
 
 // Story copy: *word* = gold italic. Pre-split into spans so the scroll effect can light them one by one.
 const STORY = "From a dream taking shape to a room filled with *warm* *light.* Hand-painted Pichwai arches, a glowing *moon* on the wall, a garden of green — and a kitchen that cooks across *five* *cuisines.* Pull up a chair in Salkia. Stay a while.";
@@ -74,8 +81,8 @@ const Letters = ({ text }: { text: string }) => {
   );
 };
 
-const Veg = ({ t }: { t: "v" | "n" | "x" }) =>
-  t === "x" ? null : <i className={t === "v" ? "vg" : "vg n"} role="img" aria-label={t === "v" ? "Veg" : "Non-veg"} />;
+/** a reveal / entrance delay (the CSS reads --d) */
+const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
 export default function Home() {
   // The hero video's poster is the first big thing you see (full-screen on phones); start fetching it early.
@@ -92,10 +99,10 @@ export default function Home() {
         </div>
       </div>
 
+      {/* section ids match the <section id>s below; the phone sheet lists all five, the bar all but Menu */}
       <Nav
-        links={[{ href: "#story", label: "Story" }, { href: "#room", label: "The Room" }, { href: "#signatures", label: "Signatures" }, { href: "#visit", label: "Visit" }]}
-        cta={{ href: "/menu", label: "View menu" }}
-        sheet={[{ href: "#story", label: "Story" }, { href: "#room", label: "The Room" }, { href: "#signatures", label: "Signatures" }, { href: "/menu", label: "Menu" }, { href: "#visit", label: "Visit" }]}
+        brand={<Link className="brand" href="/" aria-label="Luna Dine home"><Emblem className="emb" /><Wordmark className="wm" label="Luna Dine" /></Link>}
+        links={[["story", "Story"], ["room", "The Room"], ["signatures", "Signatures"], ["/menu", "Menu"], ["visit", "Visit"]]}
       />
 
       <main>
@@ -104,15 +111,15 @@ export default function Home() {
           <Sky className="hero__sky" />
           <div className="wrap hero__grid">
             <div className="hero__copy">
-              <span className="kicker reveal-in" style={{ "--d": ".1s" } as React.CSSProperties}>Exotic multicuisine · Salkia, Howrah</span>
+              <span className="kicker reveal-in" style={delay(.1)}>Exotic multicuisine · Salkia, Howrah</span>
               <h1 className="h-xl">
-                <span className="line"><span style={{ "--d": ".15s" } as React.CSSProperties}>Beyond</span></span>
-                <span className="line"><span style={{ "--d": ".27s" } as React.CSSProperties}><em>fine</em> dining</span></span>
+                <span className="line"><span style={delay(.15)}>Beyond</span></span>
+                <span className="line"><span style={delay(.27)}><em>fine</em> dining</span></span>
               </h1>
-              <p className="lead reveal-in" style={{ "--d": ".5s" } as React.CSSProperties}>
+              <p className="lead reveal-in" style={delay(.5)}>
                 Wok-fired Chinese, smoky tandoor, Bengali home classics and Thai–Korean twists — served under one moonlit roof, opposite Ghasbagan Maidan.
               </p>
-              <div className="hero__cta reveal-in" style={{ "--d": ".62s" } as React.CSSProperties}>
+              <div className="hero__cta reveal-in" style={delay(.62)}>
                 <Link className="btn" href="/menu">Explore the menu <IArrow /></Link>
                 <a className="btn btn--ghost" href={SITE.tel}><IPhone /> Call to reserve</a>
               </div>
@@ -212,23 +219,18 @@ export default function Home() {
                 <span className="kicker" data-reveal>From the kitchen</span>
                 <h2 className="h-l split">
                   <span className="line"><span>Plates worth</span></span>
-                  <span className="line line--road"><span style={{ "--d": ".1s" } as React.CSSProperties}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
+                  <span className="line line--road"><span style={delay(.1)}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
                 </h2>
               </div>
-              <div className="sig__aside" data-reveal style={{ "--d": ".1s" } as React.CSSProperties}>
+              <div className="sig__aside" data-reveal style={delay(.1)}>
                 <div className="ornament"><Ornament /></div>
                 <p>A short list from a menu of {TOTAL_DISHES}, and every plate comes with the kitchen&rsquo;s promise</p>
-                <ul className="sig__promise" aria-label="Our kitchen promise">
-                  <li><ISeal />No Ajinomoto</li>
-                  <li><ISeal />No trans fat</li>
-                  <li><ISeal />No food colour</li>
-                  <li className="sig__veg"><ILeaf />Separate chef &amp; utensils for our vegetarian menu</li>
-                </ul>
+                <KitchenPromise className="sig__promise" />
               </div>
             </div>
             <div className="dishes">
               {DISHES.map((x, i) => (
-                <article className="dish" data-reveal style={{ "--d": `${(i % 3) * 0.09}s` } as React.CSSProperties} key={x.n}>
+                <article className="dish" data-reveal style={delay((i % 3) * 0.09)} key={x.n}>
                   <span className="dish__sky" aria-hidden="true"><i className="dish__moon" /></span>
                   <div className="dish__top"><span>{x.c}</span><Veg t={x.t} /></div>
                   <h3><span className="sr-only">{x.n}</span><Letters text={x.n} /></h3>
@@ -251,7 +253,7 @@ export default function Home() {
               <span className="kicker" data-reveal>Visit us</span>
               <h2 className="h-l split">
                 <span className="line"><span>Follow the</span></span>
-                <span className="line"><span style={{ "--d": ".1s" } as React.CSSProperties}><em>moonlight</em></span></span>
+                <span className="line"><span style={delay(.1)}><em>moonlight</em></span></span>
               </h2>
               <div className="info" data-reveal>
                 <a href={SITE.maps} target="_blank" rel="noopener"><small>Find us</small><b>{SITE.address}</b><IArrow /></a>
@@ -265,7 +267,7 @@ export default function Home() {
                 <a href={SITE.whatsapp} target="_blank" rel="noopener" aria-label="WhatsApp"><IWhatsApp /></a>
               </div>
             </div>
-            <div className="map" data-reveal style={{ "--d": ".1s" } as React.CSSProperties}>
+            <div className="map" data-reveal style={delay(.1)}>
               <iframe title="Map to Luna Dine" data-src={SITE.mapEmbed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               <span className="map__pin" aria-hidden="true" />
               <a className="btn map__cta" href={SITE.maps} target="_blank" rel="noopener">Get directions <IArrow /></a>
