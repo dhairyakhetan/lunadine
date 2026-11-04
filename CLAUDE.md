@@ -34,7 +34,8 @@ Look here first; the names in `backticks` are the functions/constants to search 
 | `components/Brand.tsx` | Logo paths traced from the printed menu (`EMBLEM_D`, `WORDMARK_D`, `TAGLINE_D`, `ORNAMENT_D` + `_VB`), made into components by `mark()`. `qr/qr-maker.py` regex-reads the `*_D`/`*_VB` lines, so keep that format. |
 | `components/Chrome.tsx` | `KitchenPromise` (both pages), `Footer`, `Dock` (home). |
 | `lib/site.ts` | `SITE`: phone, email, address, map links, socials, `url` (= `PROD_URL`, **`https://luna-dine.vercel.app`**), `review`. |
-| `next.config.ts` | `/review` → `SITE.review` (307), year-long immutable cache on `/img/*` and `/video/*`. |
+| `next.config.ts` | Year-long immutable cache on `/img/*` and `/video/*`. |
+| `app/review/route.ts` | `/review`, where the review QR codes point: a tiny static HTML page (no React, `force-static`) that sends the reader on to `SITE.review` in the same tab (`location.replace`, so Back doesn't bounce them here again). Before leaving it rewrites its own address to `/` (`history.replaceState`): if Google's link opens the Maps app, the tab left behind is the home page, so a background-tab reload never re-opens the app; coming back to that tab (or restoring it from the back/forward cache) loads the home page. Don't turn it back into a server redirect: that's what left tabs re-opening the app. |
 
 **Home (`/`)**
 | File | What's in it |
