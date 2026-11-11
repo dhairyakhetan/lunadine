@@ -41,5 +41,5 @@ export const SITE = {
   reviewWeb: `https://search.google.com/local/writereview?placeid=${PLACE_ID}`,
   /* Search engines' ownership checks. In Google Search Console (URL-prefix property for PROD_URL, "HTML tag"
      method) or Bing Webmaster Tools, copy just the content="…" code, paste it here and redeploy. Empty: no tag. */
-  verify: { google: "", bing: "" },
+  verify: { google: "0S_or_cvv-AcnAeaAYrnEhI0HkwdFD2QiH6tG8Tvjbk", bing: "" },
 };
