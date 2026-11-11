@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { preload } from "react-dom";
 import Nav from "@/components/Nav";
 import Sky from "@/components/Sky";
@@ -21,6 +22,7 @@ import signDeer from "@/assets/img/sign-deer.webp";
 import signLuna from "@/assets/img/sign-luna.webp";
 import tableSetting from "@/assets/img/table-setting.webp";
 import ogHome from "@/assets/img/og-home.jpg";
+import appleIcon from "@/assets/img/apple-touch-icon.png";
 import heroPoster from "@/assets/video/hero-poster.webp";
 
 // a URL with the file's content hash in it, like the images above (Next has no import for video)
@@ -69,16 +71,27 @@ const DISHES = [
 // Story copy: *word* = gold italic. Pre-split into spans so the scroll effect can light them one by one.
 const STORY = "From a dream taking shape to a room filled with *warm* *light.* Hand-painted Pichwai arches, a glowing *moon* on the wall, a garden of green — and a kitchen that cooks across *five* *cuisines.* Pull up a chair in Salkia. Stay a while.";
 
-const jsonLd = {
-  "@context": "https://schema.org", "@type": "Restaurant", name: SITE.name, slogan: SITE.tagline,
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+/* Structured data for search engines, on the home page only (where Google reads a site's name). WebSite gives the
+   site's name and the other names it's searched by (Google's "site name" in results); Restaurant is the business,
+   matching its Google Maps listing (name, address, phone, hours, pin). Check changes with validator.schema.org. */
+const home = `${SITE.url}/`, abs = (src: string) => SITE.url + src;
+const jsonLd = { "@context": "https://schema.org", "@graph": [{
+  "@type": "WebSite", "@id": `${home}#website`, url: home, name: SITE.name, alternateName: SITE.alternateNames,
+  inLanguage: "en-IN", publisher: { "@id": `${home}#restaurant` },
+}, {
+  "@type": "Restaurant", "@id": `${home}#restaurant`, name: SITE.name, alternateName: SITE.alternateNames,
+  slogan: SITE.tagline, description: SITE.description, url: home, logo: abs(appleIcon.src),
+  image: [ogHome, facadeDusk, arches, moonWall].map(i => abs(i.src)),
   servesCuisine: ["Chinese", "Indian", "Bengali", "Thai", "Korean", "Mughlai"],
-  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", url: SITE.url, image: SITE.url + ogHome.src,
+  telephone: SITE.phone, email: SITE.email, priceRange: "₹₹", hasMap: SITE.maps,
   address: { "@type": "PostalAddress", streetAddress: "140/2 Salkia School Road, Opposite Ghasbagan Maidan, near Sansaraa", addressLocality: "Howrah", addressRegion: "West Bengal", postalCode: "711101", addressCountry: "IN" },
   geo: { "@type": "GeoCoordinates", latitude: SITE.geo.lat, longitude: SITE.geo.lng },
   // open every day, 11 am to midnight (owner, Nov 2026); 23:59 is the unambiguous way to write midnight here
   openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], opens: "11:00", closes: "23:59" }],
-  hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
-};
+  menu: `${SITE.url}/menu`, hasMenu: `${SITE.url}/menu`, acceptsReservations: true, sameAs: [SITE.instagram, SITE.facebook],
+}] };
 
 /** A dish name split into letters (each with its index as --i), so they can light up and lift one after another.
  *  Words stay unbreakable; screen readers get the plain name from an sr-only copy. */
@@ -128,7 +141,8 @@ export default function Home() {
             <div className="hero__copy">
               <span className="kicker reveal-in" style={delay(.1)}>Exotic multicuisine · Salkia, Howrah</span>
               <h1 className="h-xl">
-                <span className="line"><span style={delay(.15)}>Beyond</span></span>
+                <span className="sr-only">Luna Dine: </span>
+                <span className="line"><span style={delay(.15)}>Beyond</span></span>{" "}
                 <span className="line"><span style={delay(.27)}><em>fine</em> dining</span></span>
               </h1>
               <p className="lead reveal-in" style={delay(.5)}>
@@ -200,7 +214,7 @@ export default function Home() {
               <div className="portal__head">
                 <span className="kicker">The Room</span>
                 <h2 className="portal__h">
-                  <span className="portal__l">Step inside</span>
+                  <span className="portal__l">Step inside</span>{" "}
                   <span className="portal__gap" aria-hidden="true" />
                   <span className="portal__r">the <em>glow</em></span>
                 </h2>
@@ -233,7 +247,7 @@ export default function Home() {
               <div>
                 <span className="kicker" data-reveal>From the kitchen</span>
                 <h2 className="h-l split">
-                  <span className="line"><span>Plates worth</span></span>
+                  <span className="line"><span>Plates worth</span></span>{" "}
                   <span className="line line--road"><span style={delay(.1)}>the <em className="detour">detour<svg className="detour__road" viewBox="0 0 220 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 20 C 28 6, 50 28, 78 16 S 126 2, 152 15 S 192 28, 210 12" /><circle cx="210" cy="12" r="5" /></svg></em></span></span>
                 </h2>
               </div>
@@ -267,7 +281,7 @@ export default function Home() {
             <div>
               <span className="kicker" data-reveal>Visit us</span>
               <h2 className="h-l split">
-                <span className="line"><span>Follow the</span></span>
+                <span className="line"><span>Follow the</span></span>{" "}
                 <span className="line"><span style={delay(.1)}><em>moonlight</em></span></span>
               </h2>
               <div className="info" data-reveal>

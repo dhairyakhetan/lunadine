@@ -7,7 +7,7 @@ import { SITE } from "@/lib/site";
 import ogMenu from "@/assets/img/og-menu.jpg";
 
 export const metadata: Metadata = {
-  title: "Menu — Chinese, Tandoor, Bengali, Thai & Korean in Salkia, Howrah",
+  title: { absolute: "Luna Dine Menu & Prices — Salkia, Howrah" },
   description:
     "The full Luna Dine menu — soups, Chinese starters, noodles, fried rice, momos, tandoor, biryani & pulao, Indian & Bengali curries, breads, mocktails, shakes and desserts, with prices. No Ajinomoto, no trans fat, no food colour, and a separate chef and utensils for vegetarian dishes.",
   alternates: { canonical: "/menu" },
@@ -35,7 +35,7 @@ export default function MenuPage() {
               <Emblem className="emb" />
               <Wordmark className="wm" label="Luna Dine" />
             </Link>
-            <h1>Menu</h1>
+            <h1><span className="sr-only">Luna Dine </span>Menu</h1>
           </div>
           <KitchenPromise className="promise" />
         </div>

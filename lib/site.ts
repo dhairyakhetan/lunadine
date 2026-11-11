@@ -13,7 +13,11 @@ const LAT = 22.5921127, LNG = 88.3431916;
 
 export const SITE = {
   name: "Luna Dine",
+  /** other names people search for (WebSite and Restaurant structured data on the home page) */
+  alternateNames: ["LunaDine"],
   tagline: "Beyond Fine Dining",
+  /** one-line description for search engines (meta description, structured data) */
+  description: "Luna Dine is an exotic multicuisine restaurant on Salkia School Road, Howrah: Chinese, tandoor, Bengali, Thai and Korean under one moonlit roof.",
   url: PROD_URL,
   phone: "+91 74397 24362",
   tel: "tel:+917439724362",
@@ -35,4 +39,7 @@ export const SITE = {
      reviewWeb: Google's "write a review" box in the browser, from PLACE_ID. The fallback button on /review. */
   review: "https://g.page/r/Cd25E5Ds5kxIEAE/review",
   reviewWeb: `https://search.google.com/local/writereview?placeid=${PLACE_ID}`,
+  /* Search engines' ownership checks. In Google Search Console (URL-prefix property for PROD_URL, "HTML tag"
+     method) or Bing Webmaster Tools, copy just the content="…" code, paste it here and redeploy. Empty: no tag. */
+  verify: { google: "", bing: "" },
 };

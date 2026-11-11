@@ -1,5 +1,7 @@
 # Luna Dine — website
 
+**Live site: [luna-dine.vercel.app](https://luna-dine.vercel.app)** · [Menu](https://luna-dine.vercel.app/menu) · Luna Dine, an exotic multicuisine restaurant at 140/2 Salkia School Road, Howrah.
+
 Next.js 16 (App Router) site for Luna Dine, Salkia, Howrah. Both pages are statically pre-rendered. `CLAUDE.md` has the full code map, what has to change together, and the content rules.
 
 ## Run / deploy

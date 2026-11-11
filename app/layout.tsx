@@ -24,12 +24,18 @@ const sans = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
+  // "Luna Dine" first, and "restaurant" in it: what people type. Google shows about 60 characters.
   title: {
-    default: "Luna Dine — Beyond Fine Dining · Exotic Multicuisine, Salkia, Howrah",
+    default: "Luna Dine — Exotic Multicuisine Restaurant, Salkia, Howrah",
     template: "%s · Luna Dine",
   },
-  description:
-    "Luna Dine is an exotic multicuisine restaurant on Salkia School Road, Howrah — Chinese, tandoor, Bengali, Thai and Korean under one moonlit roof. Call 074397 24362 to reserve.",
+  description: `${SITE.description} Open daily, 11 am – midnight. Call 074397 24362 to reserve.`,
+  applicationName: SITE.name,
+  robots: { "max-image-preview": "large" }, // let Google show big photo previews; indexing is the default
+  verification: {
+    google: SITE.verify.google || undefined,
+    other: SITE.verify.bing ? { "msvalidate.01": SITE.verify.bing } : undefined,
+  },
   icons: { icon: favicon.src, apple: appleIcon.src },
   openGraph: {
     type: "website",
@@ -58,7 +64,7 @@ const noScriptCss = "[data-reveal],.split .line>span{opacity:1!important;transfo
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+    <html lang="en-IN" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: introScript }} />
         {/* Without JS the scroll reveals never run, so show that content instead of leaving it invisible. */}
